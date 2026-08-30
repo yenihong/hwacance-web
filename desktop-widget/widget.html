@@ -140,6 +140,13 @@ body{
   filter:drop-shadow(0 6px 10px rgba(34,38,46,0.25));
   pointer-events:none;
 }
+.mascot-toilet.custom-photo{
+  width:108px;
+  height:108px;
+  right:0px;
+  bottom:-8px;
+  border-radius:16px;
+}
 </style>
 </head>
 <body>
@@ -310,10 +317,10 @@ body{
   var mascotImgEl = document.getElementById("mascotToiletImg");
   if(window.hwacanceSettings && mascotImgEl){
     window.hwacanceSettings.get().then(function(settings){
-      if(settings && settings.photoDataUrl){ mascotImgEl.src = settings.photoDataUrl; }
+      if(settings && settings.photoDataUrl){ mascotImgEl.src = settings.photoDataUrl; mascotImgEl.classList.add("custom-photo"); }
     });
     window.hwacanceSettings.onUpdate(function(photoDataUrl){
-      if(photoDataUrl){ mascotImgEl.src = photoDataUrl; }
+      if(photoDataUrl){ mascotImgEl.src = photoDataUrl; mascotImgEl.classList.add("custom-photo"); }
       else { location.reload(); }
     });
   }
