@@ -18,11 +18,14 @@
     "productName": "화캉스 위젯",
     "files": [
       "main.js",
+      "preload.js",
       "widget.html",
+      "settings.html",
       "icon.png"
     ],
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "icon.png"
     }
   }
 }

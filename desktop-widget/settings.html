@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>화캉스 위젯 설정</title>
+<style>
+  :root{
+    --blue-main:#6485F6;
+    --blue-accent:#4C6BDB;
+    --blue-grid:#E3EDFF;
+    --ink:#22262E;
+    --ink-soft:#5B6270;
+  }
+  *{ box-sizing:border-box; margin:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:'Apple SD Gothic Neo','맑은 고딕',sans-serif;
+    color:var(--ink);
+    background:#FFFFFF;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 24px;
+    gap:16px;
+  }
+  h1{ font-size:16px; font-weight:800; }
+  .sub{ font-size:12px; color:var(--ink-soft); text-align:center; line-height:1.5; }
+  .preview-wrap{
+    width:160px; height:160px;
+    border-radius:24px;
+    background:var(--blue-grid);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    border:2px solid var(--blue-grid);
+    cursor:pointer;
+  }
+  .preview-wrap img{ width:100%; height:100%; object-fit:cover; display:none; }
+  .preview-wrap .placeholder{ font-size:72px; line-height:1; }
+  .hint{ font-size:11px; color:var(--ink-soft); }
+  input[type="file"]{ display:none; }
+  .btn-row{ display:flex; gap:8px; margin-top:4px; }
+  .btn{
+    border:none;
+    border-radius:999px;
+    font-family:inherit;
+    font-weight:700;
+    font-size:12.5px;
+    padding:9px 16px;
+    cursor:pointer;
+  }
+  .btn-primary{ background:var(--blue-main); color:#fff; }
+  .btn-ghost{ background:#fff; color:var(--blue-accent); border:2px solid var(--blue-grid); }
+  .footer-row{ margin-top:auto; display:flex; gap:8px; width:100%; }
+  .footer-row .btn{ flex:1; }
+  .error{ font-size:11.5px; color:#E4573D; min-height:14px; }
+</style>
+</head>
+<body>
+  <h1>화캉스 위젯 설정</h1>
+  <p class="sub">위젯 카드 오른쪽 아래에 보일 사진을 미리 골라두세요.<br/>안 고르면 기본 변기 그림이 나와요.</p>
+
+  <div class="preview-wrap" id="previewWrap">
+    <span class="placeholder" id="previewPlaceholder">🚽</span>
+    <img id="previewImg" alt="미리보기" />
+  </div>
+  <p class="hint" id="hintText">클릭해서 사진 선택</p>
+  <p class="error" id="errorText"></p>
+  <input type="file" id="fileInput" accept="image/*" />
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" id="resetBtn" type="button">기본 변기로 되돌리기</button>
+  </div>
+
+  <div class="footer-row">
+    <button class="btn btn-ghost" id="closeBtn" type="button">닫기</button>
+    <button class="btn btn-primary" id="saveBtn" type="button">저장하고 닫기</button>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var previewWrap = document.getElementById("previewWrap");
+  var previewImg = document.getElementById("previewImg");
+  var previewPlaceholder = document.getElementById("previewPlaceholder");
+  var fileInput = document.getElementById("fileInput");
+  var hintText = document.getElementById("hintText");
+  var errorText = document.getElementById("errorText");
+  var resetBtn = document.getElementById("resetBtn");
+  var saveBtn = document.getElementById("saveBtn");
+  var closeBtn = document.getElementById("closeBtn");
+
+  var MAX_BYTES = 4 * 1024 * 1024; // 4MB
+  var pendingDataUrl = null; // null = 변경 없음, "" = 기본값으로 리셋 예정, 그 외 = 새 이미지
+
+  function showPhoto(dataUrl){
+    previewImg.src = dataUrl;
+    previewImg.style.display = "block";
+    previewPlaceholder.style.display = "none";
+  }
+  function showPlaceholder(){
+    previewImg.style.display = "none";
+    previewImg.removeAttribute("src");
+    previewPlaceholder.style.display = "block";
+  }
+
+  window.hwacanceSettings.get().then(function(settings){
+    if(settings && settings.photoDataUrl){
+      showPhoto(settings.photoDataUrl);
+      hintText.textContent = "클릭해서 다른 사진으로 바꾸기";
+    }
+  });
+
+  previewWrap.addEventListener("click", function(){ fileInput.click(); });
+
+  fileInput.addEventListener("change", function(){
+    var file = fileInput.files && fileInput.files[0];
+    if(!file) return;
+    errorText.textContent = "";
+    if(file.size > MAX_BYTES){
+      errorText.textContent = "사진이 너무 커요 (4MB 이하로 골라주세요)";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){
+      pendingDataUrl = reader.result;
+      showPhoto(pendingDataUrl);
+      hintText.textContent = "클릭해서 다른 사진으로 바꾸기";
+    };
+    reader.onerror = function(){
+      errorText.textContent = "사진을 읽지 못했어요, 다시 시도해주세요";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  resetBtn.addEventListener("click", function(){
+    pendingDataUrl = "";
+    showPlaceholder();
+    hintText.textContent = "클릭해서 사진 선택";
+    errorText.textContent = "";
+  });
+
+  saveBtn.addEventListener("click", function(){
+    var toSave = pendingDataUrl === null ? undefined : (pendingDataUrl || null);
+    if(toSave === undefined){
+      window.hwacanceSettings.closeSettingsWindow();
+      return;
+    }
+    window.hwacanceSettings.set(toSave).then(function(){
+      window.hwacanceSettings.closeSettingsWindow();
+    });
+  });
+
+  closeBtn.addEventListener("click", function(){
+    window.hwacanceSettings.closeSettingsWindow();
+  });
+})();
+</script>
+</body>
+</html>
