@@ -20,13 +20,13 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    padding:28px 24px;
-    gap:16px;
+    padding:24px 24px 20px;
+    gap:12px;
   }
   h1{ font-size:16px; font-weight:800; }
   .sub{ font-size:12px; color:var(--ink-soft); text-align:center; line-height:1.5; }
   .preview-wrap{
-    width:160px; height:160px;
+    width:140px; height:140px;
     border-radius:24px;
     background:var(--blue-grid);
     display:flex; align-items:center; justify-content:center;
@@ -35,10 +35,10 @@
     cursor:pointer;
   }
   .preview-wrap img{ width:100%; height:100%; object-fit:cover; display:none; }
-  .preview-wrap .placeholder{ font-size:72px; line-height:1; }
+  .preview-wrap .placeholder{ font-size:64px; line-height:1; }
   .hint{ font-size:11px; color:var(--ink-soft); }
   input[type="file"]{ display:none; }
-  .btn-row{ display:flex; gap:8px; margin-top:4px; }
+  .btn-row{ display:flex; gap:8px; margin-top:2px; }
   .btn{
     border:none;
     border-radius:999px;
@@ -50,7 +50,21 @@
   }
   .btn-primary{ background:var(--blue-main); color:#fff; }
   .btn-ghost{ background:#fff; color:var(--blue-accent); border:2px solid var(--blue-grid); }
-  .footer-row{ margin-top:auto; display:flex; gap:8px; width:100%; }
+  .field{ width:100%; display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+  .field label{ font-size:11.5px; font-weight:700; color:var(--ink-soft); }
+  .field input[type="text"]{
+    width:100%;
+    border:2px solid var(--blue-grid);
+    border-radius:12px;
+    padding:9px 12px;
+    font-family:inherit;
+    font-size:13px;
+    color:var(--ink);
+    outline:none;
+  }
+  .field input[type="text"]:focus{ border-color:var(--blue-main); }
+  .field-hint{ font-size:10.5px; color:var(--ink-soft); }
+  .footer-row{ margin-top:auto; display:flex; gap:8px; width:100%; padding-top:8px; }
   .footer-row .btn{ flex:1; }
   .error{ font-size:11.5px; color:#E4573D; min-height:14px; }
 </style>
@@ -71,6 +85,12 @@
     <button class="btn btn-ghost" id="resetBtn" type="button">기본 변기로 되돌리기</button>
   </div>
 
+  <div class="field">
+    <label for="nicknameInput">닉네임 (선택)</label>
+    <input type="text" id="nicknameInput" maxlength="12" placeholder="예: 다이니" />
+    <p class="field-hint">닉네임을 넣으면 오늘 첫 기록 전에 "{닉네임}, 나랑 눈치껏 화장쉼 잘 해보자!" 라고 인사해요.</p>
+  </div>
+
   <div class="footer-row">
     <button class="btn btn-ghost" id="closeBtn" type="button">닫기</button>
     <button class="btn btn-primary" id="saveBtn" type="button">저장하고 닫기</button>
@@ -88,9 +108,11 @@
   var resetBtn = document.getElementById("resetBtn");
   var saveBtn = document.getElementById("saveBtn");
   var closeBtn = document.getElementById("closeBtn");
+  var nicknameInput = document.getElementById("nicknameInput");
 
   var MAX_BYTES = 4 * 1024 * 1024; // 4MB
   var pendingDataUrl = null; // null = 변경 없음, "" = 기본값으로 리셋 예정, 그 외 = 새 이미지
+  var loadedPhotoDataUrl = null;
 
   function showPhoto(dataUrl){
     previewImg.src = dataUrl;
@@ -105,8 +127,12 @@
 
   window.hwacanceSettings.get().then(function(settings){
     if(settings && settings.photoDataUrl){
+      loadedPhotoDataUrl = settings.photoDataUrl;
       showPhoto(settings.photoDataUrl);
       hintText.textContent = "클릭해서 다른 사진으로 바꾸기";
+    }
+    if(settings && settings.nickname){
+      nicknameInput.value = settings.nickname;
     }
   });
 
@@ -140,12 +166,9 @@
   });
 
   saveBtn.addEventListener("click", function(){
-    var toSave = pendingDataUrl === null ? undefined : (pendingDataUrl || null);
-    if(toSave === undefined){
-      window.hwacanceSettings.closeSettingsWindow();
-      return;
-    }
-    window.hwacanceSettings.set(toSave).then(function(){
+    var photoToSave = pendingDataUrl === null ? loadedPhotoDataUrl : (pendingDataUrl || null);
+    var nicknameToSave = nicknameInput.value.trim();
+    window.hwacanceSettings.set({ photoDataUrl: photoToSave, nickname: nicknameToSave || null }).then(function(){
       window.hwacanceSettings.closeSettingsWindow();
     });
   });

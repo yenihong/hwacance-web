@@ -234,8 +234,12 @@ body{
   var asmrAudioEl = document.getElementById("asmrAudio");
   var tickHandle = null;
 
+  var currentNickname = null;
   function renderGuidance(){
     var g = guidance(state);
+    if(g.tier === "first" && currentNickname){
+      g = { text: currentNickname + ", 나랑 눈치껏 화장쉼 잘 해보자!", tier: "first" };
+    }
     guidanceEl.setAttribute("data-tier", g.tier);
     statusDotEl.setAttribute("data-tier", g.tier);
     if(g.tier === "away"){
@@ -313,15 +317,23 @@ body{
 
   renderAll(); renderAsmrButton(); startTicking();
 
-  // 사용자가 설정창에서 골라둔 사진이 있으면 변기 그림 대신 적용한다.
+  // 사용자가 설정창에서 골라둔 사진/닉네임이 있으면 변기 그림·안내 문구에 반영한다.
   var mascotImgEl = document.getElementById("mascotToiletImg");
   if(window.hwacanceSettings && mascotImgEl){
     window.hwacanceSettings.get().then(function(settings){
       if(settings && settings.photoDataUrl){ mascotImgEl.src = settings.photoDataUrl; mascotImgEl.classList.add("custom-photo"); }
+      currentNickname = (settings && settings.nickname) ? settings.nickname : null;
+      renderGuidance();
     });
-    window.hwacanceSettings.onUpdate(function(photoDataUrl){
-      if(photoDataUrl){ mascotImgEl.src = photoDataUrl; mascotImgEl.classList.add("custom-photo"); }
-      else { location.reload(); }
+    window.hwacanceSettings.onUpdate(function(settings){
+      if(settings && settings.photoDataUrl){
+        mascotImgEl.src = settings.photoDataUrl;
+        mascotImgEl.classList.add("custom-photo");
+        currentNickname = settings.nickname || null;
+        renderGuidance();
+      } else {
+        location.reload();
+      }
     });
   }
 })();

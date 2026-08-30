@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, screen, ipcMain, nativeImage } = require("electron");
+const { app, BrowserWindow, Tray, Menu, screen, ipcMain, nativeImage, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
@@ -36,9 +36,12 @@ function loadSettings(){
   try{
     const raw = fs.readFileSync(SETTINGS_FILE, "utf8");
     const parsed = JSON.parse(raw);
-    return { photoDataUrl: typeof parsed.photoDataUrl === "string" ? parsed.photoDataUrl : null };
+    return {
+      photoDataUrl: typeof parsed.photoDataUrl === "string" ? parsed.photoDataUrl : null,
+      nickname: typeof parsed.nickname === "string" ? parsed.nickname : null
+    };
   }catch(e){
-    return { photoDataUrl: null };
+    return { photoDataUrl: null, nickname: null };
   }
 }
 
@@ -137,24 +140,35 @@ function buildTrayMenu(){
 }
 
 function createTray(){
-  tray = new Tray(nativeImage.createFromDataURL(TRAY_ICON_DATA_URL));
-  tray.setToolTip("화캉스 위젯");
-  tray.setContextMenu(buildTrayMenu());
-  tray.on("click", () => {
-    if(!mainWindow) return;
-    mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
-  });
+  try{
+    const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL);
+    if(icon.isEmpty()){
+      dialog.showErrorBox("트레이 아이콘 오류", "아이콘 이미지 데이터가 비어있습니다 (TRAY_ICON_DATA_URL 손상 가능성).");
+    }
+    tray = new Tray(icon);
+    tray.setToolTip("화캉스 위젯");
+    tray.setContextMenu(buildTrayMenu());
+    tray.on("click", () => {
+      if(!mainWindow) return;
+      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+    });
 
-  // 모니터 연결/해제 시 이동 메뉴 목록을 다시 만든다.
-  screen.on("display-added", () => tray.setContextMenu(buildTrayMenu()));
-  screen.on("display-removed", () => tray.setContextMenu(buildTrayMenu()));
+    // 모니터 연결/해제 시 이동 메뉴 목록을 다시 만든다.
+    screen.on("display-added", () => tray.setContextMenu(buildTrayMenu()));
+    screen.on("display-removed", () => tray.setContextMenu(buildTrayMenu()));
+  }catch(e){
+    dialog.showErrorBox("트레이 아이콘 생성 실패", String((e && e.stack) || e));
+  }
 }
 
 ipcMain.handle("settings:get", () => loadSettings());
-ipcMain.handle("settings:set", (_event, photoDataUrl) => {
-  const settings = { photoDataUrl: photoDataUrl || null };
+ipcMain.handle("settings:set", (_event, payload) => {
+  const settings = {
+    photoDataUrl: (payload && payload.photoDataUrl) || null,
+    nickname: (payload && payload.nickname) || null
+  };
   saveSettings(settings);
-  if(mainWindow){ mainWindow.webContents.send("settings:updated", settings.photoDataUrl); }
+  if(mainWindow){ mainWindow.webContents.send("settings:updated", settings); }
   return true;
 });
 ipcMain.on("settings:close", () => {
