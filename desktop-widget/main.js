@@ -174,6 +174,9 @@ ipcMain.handle("settings:set", (_event, payload) => {
 ipcMain.on("settings:close", () => {
   if(settingsWindow) settingsWindow.close();
 });
+ipcMain.on("settings:open", () => {
+  createSettingsWindow();
+});
 
 app.whenReady().then(() => {
   createWindow();

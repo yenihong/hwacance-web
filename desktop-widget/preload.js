@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld("hwacanceSettings", {
   onUpdate: (callback) => {
     ipcRenderer.on("settings:updated", (_event, photoDataUrl) => callback(photoDataUrl));
   },
-  closeSettingsWindow: () => ipcRenderer.send("settings:close")
+  closeSettingsWindow: () => ipcRenderer.send("settings:close"),
+  openSettings: () => ipcRenderer.send("settings:open")
 });

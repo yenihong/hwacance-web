@@ -156,6 +156,7 @@ body{
       <div class="header-right">
         <span class="status-dot" id="statusDot"></span>
         <button class="asmr-btn" id="asmrToggle" type="button" data-state="off" aria-label="ASMR 켜기">♪</button>
+        <button class="asmr-btn" id="settingsBtn" type="button" aria-label="설정 열기">⚙</button>
       </div>
     </div>
     <p class="guidance-line" id="guidanceText"><span class="guidance-label" id="guidanceLabel"></span></p>
@@ -312,6 +313,11 @@ body{
     persist(); renderAsmrButton();
   }
   asmrBtn.addEventListener("click", toggleAsmr);
+
+  var settingsBtn = document.getElementById("settingsBtn");
+  if(settingsBtn && window.hwacanceSettings && window.hwacanceSettings.openSettings){
+    settingsBtn.addEventListener("click", function(){ window.hwacanceSettings.openSettings(); });
+  }
 
   document.addEventListener("visibilitychange", function(){ if(!document.hidden){ renderGuidance(); } });
 
