@@ -216,9 +216,22 @@ body{
     if(!state.lastRecordedAt) return { text:"오늘의 첫 화장쉼을 기록해보세요", tier:"first" };
     var elapsedMin = Math.max(0,(Date.now()-state.lastRecordedAt)/60000);
     var tierInfo;
-    if(elapsedMin<30) tierInfo = { text:"아직은 눈치 봐야 해요", tier:"red" };
-    else if(elapsedMin<60) tierInfo = { text:"조금 더 버텨보는 걸 추천", tier:"yellow" };
-    else tierInfo = { text:"이제는 마음껏 화장쉼하세요", tier:"green" };
+    var isPersonal = currentHasCustomPhoto && currentNickname;
+    if(elapsedMin<30){
+      tierInfo = isPersonal
+        ? { text: currentNickname + ", 아직은 눈치를 봐야해!", tier:"red" }
+        : { text:"아직은 눈치 봐야 해요", tier:"red" };
+    }
+    else if(elapsedMin<60){
+      tierInfo = isPersonal
+        ? { text: currentNickname + ", 조금만 더 버텨봐!", tier:"yellow" }
+        : { text:"조금 더 버텨보는 걸 추천", tier:"yellow" };
+    }
+    else{
+      tierInfo = isPersonal
+        ? { text: currentNickname + ", 이제는 마음껏 화장쉼해!", tier:"green" }
+        : { text:"이제는 마음껏 화장쉼하세요", tier:"green" };
+    }
     tierInfo.elapsedMin = elapsedMin;
     return tierInfo;
   }
@@ -236,6 +249,7 @@ body{
   var tickHandle = null;
 
   var currentNickname = null;
+  var currentHasCustomPhoto = false;
   function renderGuidance(){
     var g = guidance(state);
     if(g.tier === "first" && currentNickname){
@@ -328,6 +342,7 @@ body{
   if(window.hwacanceSettings && mascotImgEl){
     window.hwacanceSettings.get().then(function(settings){
       if(settings && settings.photoDataUrl){ mascotImgEl.src = settings.photoDataUrl; mascotImgEl.classList.add("custom-photo"); }
+      currentHasCustomPhoto = !!(settings && settings.photoDataUrl);
       currentNickname = (settings && settings.nickname) ? settings.nickname : null;
       renderGuidance();
     });
@@ -335,6 +350,7 @@ body{
       if(settings && settings.photoDataUrl){
         mascotImgEl.src = settings.photoDataUrl;
         mascotImgEl.classList.add("custom-photo");
+        currentHasCustomPhoto = true;
         currentNickname = settings.nickname || null;
         renderGuidance();
       } else {
