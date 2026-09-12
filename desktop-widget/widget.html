@@ -50,8 +50,8 @@ body{
 }
 .brand-logo{
   width:15px; height:15px;
-  font-size:13px; line-height:15px;
-  display:flex; align-items:center; justify-content:center;
+  object-fit:contain;
+  display:block;
 }
 .corner-controls{
   position:absolute;
@@ -167,7 +167,7 @@ body{
 <body>
   <div class="card">
     <div class="content">
-      <span class="brand-logo" aria-hidden="true">🧻</span>
+      <img class="brand-logo" src="tissue-icon.png" alt="화캉스" />
       <p class="guidance-line" id="guidanceText"><span class="guidance-label" id="guidanceLabel"></span></p>
       <p class="sub-line" id="subLine"></p>
       <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">자리 비우기</button>
