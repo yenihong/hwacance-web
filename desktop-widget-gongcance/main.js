@@ -2,6 +2,10 @@ const { app, BrowserWindow, Tray, Menu, screen, ipcMain, nativeImage, dialog } =
 const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
+const { trackEvent, trackOnce } = require("./telemetry");
+
+// 위젯 화면(렌더러)에서 보내도 되는 통계 이벤트 목록
+const RENDERER_EVENTS = ["break_started", "break_ended", "todo_added", "todo_completed", "asmr_on"];
 
 const TRAY_ICON_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAACBElEQVR42u3dsU3DYBSFUU/GDJQMwBT0DEWPREHPEHQ0RFRGIIoAdhzLNj9+90S6Usro/07xunTXt69dg/U2uj9tIXI4DtHDMQgfDkH4cAjCh0MQPxyB8OEQxA9HIH44AvHDEQAAgPjJCMQPRwAAAOInIwAAAPGTEQAAgPjJCAAAAAAAPETsAAAAAAA8BAAGgAFQf/3N5cklAugBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgwS6u7r+t+WcCwPNL33Q/3wsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACqAbh7PKy6pQAent5WHQCtAZxAMBQEAAAAKAdgAMFYEACqHYFfn8/f8o+OPwAaAvj4DkAggOMBAAAASUfguQAcgQAAAAAAAADgCHQEAgAAAAAAAIAj0BEIAAAAAAAAAI5ARyAAAAAAAAAAtDsCtwKw1bEHAAAAAAAAAAA4AgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKASAJs3AAAAAAAAAPDHkQaAAWAA2MoAIADAQwBgABgABoABYHEAIMhcBwAAAAAAQWR8AAD4BQCCoPgAADAIAIKQ+AAAMAoAgoD4UwAgKB4fAAAmAUBQOP65ACAoGn8OAAgKxp8LAIRC4ZcAgKBI/CUAQNh5+LUAgLDT8GsDAGFn4bcCAMMOoh/vHcnTOIFJaQDyAAAAAElFTkSuQmCC";
 
@@ -200,12 +204,15 @@ function createTray(){
 
 ipcMain.handle("settings:get", () => withAudioUrl(loadSettings()));
 ipcMain.handle("settings:set", (_event, payload) => {
-  const settings = Object.assign(loadSettings(), {
+  const previous = loadSettings();
+  const settings = Object.assign({}, previous, {
     photoDataUrl: (payload && payload.photoDataUrl) || null,
     nickname: (payload && payload.nickname) || null
   });
   saveSettings(settings);
   broadcastSettings(settings);
+  trackOnce("setup_completed");
+  if(settings.photoDataUrl && settings.photoDataUrl !== previous.photoDataUrl) trackEvent("photo_changed");
   return true;
 });
 ipcMain.handle("audio:choose", async () => {
@@ -229,6 +236,7 @@ ipcMain.handle("audio:choose", async () => {
     saveSettings(settings);
     removeAudioFile(previous.audioFile === fileName ? null : previous.audioFile);
     broadcastSettings(settings);
+    trackEvent("audio_changed");
     return { ok: true, audioName: settings.audioName };
   }catch(e){
     return { ok: false, error: "파일을 불러오지 못했어요, 다른 파일로 시도해주세요" };
@@ -250,6 +258,12 @@ ipcMain.on("settings:close", () => {
 ipcMain.on("settings:open", () => {
   createSettingsWindow();
 });
+ipcMain.on("telemetry:track", (_event, eventType, metadata) => {
+  if(!RENDERER_EVENTS.includes(eventType)) return;
+  const safe = {};
+  if(metadata && typeof metadata.breakMinutes === "number") safe.breakMinutes = metadata.breakMinutes;
+  trackEvent(eventType, safe);
+});
 
 app.whenReady().then(() => {
   cleanupStaleAudio();
@@ -257,6 +271,9 @@ app.whenReady().then(() => {
   createTray();
   const isFirstRun = !fs.existsSync(SETTINGS_FILE);
   if(isFirstRun) createSettingsWindow();
+  trackEvent("app_launched");
+  // 이전 버전에서 이미 설정을 마친 사용자도 설정 완료로 한 번 집계한다.
+  if(!isFirstRun) trackOnce("setup_completed");
 });
 
 app.on("window-all-closed", () => {

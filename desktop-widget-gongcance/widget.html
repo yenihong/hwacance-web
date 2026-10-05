@@ -375,6 +375,10 @@ body{
     tierInfo.elapsedMin = elapsedMin;
     return tierInfo;
   }
+  // 사용 통계(이벤트 종류와 쉼 시간만, 할 일 내용은 보내지 않음)
+  function track(type, meta){
+    if(window.hwacanceSettings && window.hwacanceSettings.track) window.hwacanceSettings.track(type, meta);
+  }
   function todayTotalMin(state){ return state.records.reduce(function(s,r){return s+(r.durationMin||0);},0); }
 
   var state = loadState();
@@ -448,9 +452,11 @@ body{
       state.lastRecordedAt = endedAt;
       state.running = false;
       state.startedAt = null;
+      track("break_ended", { breakMinutes: Math.round(durationMin * 10) / 10 });
     } else {
       state.startedAt = Date.now();
       state.running = true;
+      track("break_started");
     }
     persist(); renderAll(); startTicking();
   }
@@ -493,6 +499,7 @@ body{
     if(state.asmrOn){
       ensureAsmrSrc();
       asmrAudioEl.volume = 0.6;
+      track("asmr_on");
       var p = asmrAudioEl.play();
       if(p && p.catch){ p.catch(function(){ state.asmrOn=false; renderAsmrButton(); }); }
     } else { asmrAudioEl.pause(); }
@@ -545,7 +552,10 @@ body{
       var cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = t.done;
-      cb.addEventListener("change", function(){ t.done = cb.checked; saveTodos(); renderTodoCount(); });
+      cb.addEventListener("change", function(){
+        t.done = cb.checked; saveTodos(); renderTodoCount();
+        if(cb.checked) track("todo_completed");
+      });
       var box = document.createElement("span");
       box.className = "todo-box";
       var txt = document.createElement("span");
@@ -582,6 +592,7 @@ body{
     todos.push({ id: String(Date.now()) + Math.random().toString(36).slice(2, 6), text: text, done: false });
     todoInputEl.value = "";
     saveTodos(); renderTodos();
+    track("todo_added");
     todoListEl.scrollTop = todoListEl.scrollHeight;
   });
   document.addEventListener("keydown", function(e){

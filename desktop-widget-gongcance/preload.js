@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld("hwacanceSettings", {
   chooseAudio: () => ipcRenderer.invoke("audio:choose"),
   resetAudio: () => ipcRenderer.invoke("audio:reset"),
   closeSettingsWindow: () => ipcRenderer.send("settings:close"),
-  openSettings: () => ipcRenderer.send("settings:open")
+  openSettings: () => ipcRenderer.send("settings:open"),
+  track: (eventType, metadata) => ipcRenderer.send("telemetry:track", eventType, metadata)
 });
