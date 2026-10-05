@@ -1,5 +1,8 @@
 # 위젯 쪽 연동 방법
 
+> **v1.3.1부터 `desktop-widget/`에 이미 적용되어 있습니다.** (`telemetry.js`, `main.js`, `preload.js`, `widget.html`)
+> Supabase 프로젝트를 바꾸면 `desktop-widget/telemetry.js` 상단의 URL/키 두 줄만 바꾸고 다시 빌드하면 됩니다.
+
 1. `telemetry.js`를 hwacance-widget(Electron) 프로젝트의 메인 프로세스 쪽 소스에 복사합니다.
 2. 파일 상단의 `SUPABASE_URL`, `SUPABASE_ANON_KEY`를 채웁니다. (`../supabase/schema.sql`을 먼저 Supabase에 실행해야 합니다)
 3. Electron이 Node 18 미만이라 전역 `fetch`가 없다면 `node-fetch`를 설치하고 `const fetch = require('node-fetch')`를 추가하세요.

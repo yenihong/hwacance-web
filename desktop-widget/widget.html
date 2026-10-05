@@ -314,6 +314,10 @@ body{
     tickHandle = setInterval(renderGuidance, intervalMs);
   }
   function stopTicking(){ if(tickHandle){ clearInterval(tickHandle); tickHandle=null; } }
+  // 사용 통계(버튼 클릭 종류와 자리 비운 시간만 전송)
+  function track(type, meta){
+    if(window.hwacanceSettings && window.hwacanceSettings.track) window.hwacanceSettings.track(type, meta);
+  }
   function toggleStopwatch(){
     if(state.running){
       var endedAt = Date.now();
@@ -322,9 +326,11 @@ body{
       state.lastRecordedAt = endedAt;
       state.running = false;
       state.startedAt = null;
+      track("return_clicked", { awaySeconds: Math.round(durationMin * 60) });
     } else {
       state.startedAt = Date.now();
       state.running = true;
+      track("away_clicked");
     }
     persist(); renderAll(); startTicking();
   }

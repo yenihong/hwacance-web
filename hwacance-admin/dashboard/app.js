@@ -39,12 +39,15 @@ function fmt(n) {
 async function fetchGithubDownloads() {
   const repo = cfg.GITHUB_REPO;
   if (!repo) return null;
-  const res = await fetch(`https://api.github.com/repos/${repo}/releases`);
+  // 같은 저장소에 공캉스 위젯 릴리스도 있으므로 ASSET_PREFIX로 시작하는 파일만 센다.
+  const prefix = cfg.ASSET_PREFIX || "hwacance-widget";
+  const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=100`);
   if (!res.ok) throw new Error(`GitHub API 오류 (${res.status})`);
   const releases = await res.json();
   let total = 0;
   for (const release of releases) {
     for (const asset of release.assets || []) {
+      if (!asset.name.startsWith(prefix)) continue;
       total += asset.download_count || 0;
     }
   }
@@ -88,8 +91,12 @@ function groupDaily(rows) {
   return Array.from(byDay.values()).sort((a, b) => a.day.localeCompare(b.day));
 }
 
-function renderKpis(summary, downloads) {
+function renderDownloads(downloads) {
   document.getElementById('kpiDownloads').textContent = downloads === null ? '설정 필요' : fmt(downloads);
+}
+
+function renderKpis(summary, downloads) {
+  renderDownloads(downloads);
   document.getElementById('kpiSetup').textContent = fmt(summary.devices_setup);
   document.getElementById('kpiSetupRate').textContent = downloads
     ? `다운로드 대비 ${pct(summary.devices_setup, downloads)}`
@@ -169,15 +176,15 @@ async function loadAll() {
 
   const range = document.getElementById('rangeSelect').value;
 
+  // 다운로드 수는 Supabase가 실패해도 보여준다.
+  const downloadsPromise = fetchGithubDownloads().catch((err) => {
+    console.error(err);
+    return null;
+  });
+  downloadsPromise.then(renderDownloads);
+
   try {
-    const [summary, daily, downloads] = await Promise.all([
-      fetchSummary(),
-      fetchDaily(),
-      fetchGithubDownloads().catch((err) => {
-        console.error(err);
-        return null;
-      }),
-    ]);
+    const [summary, daily, downloads] = await Promise.all([fetchSummary(), fetchDaily(), downloadsPromise]);
 
     renderKpis(summary, downloads);
     const grouped = groupDaily(filterByRange(daily, range));

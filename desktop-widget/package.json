@@ -1,6 +1,6 @@
 {
   "name": "hwacance-widget",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "화캉스 데스크톱 위젯 - 화장쉼 스톱워치",
   "main": "main.js",
   "scripts": {
@@ -21,6 +21,7 @@
       "preload.js",
       "widget.html",
       "settings.html",
+      "telemetry.js",
       "icon.png",
       "tissue-icon.png",
       "fonts/**/*"

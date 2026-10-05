@@ -32,7 +32,8 @@ async function trackEvent(eventType, metadata = {}) {
       headers: {
         'Content-Type': 'application/json',
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        // 예전 형식(eyJ...) anon 키만 Authorization 헤더에 넣는다. 새 형식(sb_publishable_...)은 apikey 헤더만 쓴다.
+        ...(SUPABASE_ANON_KEY.startsWith('eyJ') ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } : {}),
       },
       body: JSON.stringify({
         device_id: getDeviceId(),
