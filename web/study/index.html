@@ -70,7 +70,7 @@ body{
   display:flex;
   align-items:center;
   gap:4px;
-  z-index:3;
+  z-index:5;
 }
 .asmr-btn{
   width:18px; height:18px;
@@ -167,6 +167,123 @@ body{
   object-fit:cover;
 }
 
+/* ---- 할 일 목록 ---- */
+.asmr-btn svg{ width:10px; height:10px; display:block; }
+.todo-open .mascot-mask{ display:none; }
+.todo-panel{
+  position:absolute;
+  top:0; right:0; bottom:0; left:0;
+  z-index:4;
+  background:var(--white);
+  display:none;
+  flex-direction:column;
+  padding:8px 13px 9px;
+}
+.todo-panel.open{ display:flex; }
+.todo-head{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  height:18px;
+  flex-shrink:0;
+}
+.todo-title{ font-size:11px; font-weight:700; color:#474F61; letter-spacing:-0.2px; }
+.todo-count{ font-size:8.5px; color:#8C94A3; }
+.todo-list{
+  list-style:none;
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  margin:6px 0 0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.todo-list::-webkit-scrollbar{ width:3px; }
+.todo-list::-webkit-scrollbar-thumb{ background:#D5DDF0; border-radius:2px; }
+.todo-item{ display:flex; align-items:center; gap:4px; min-height:19px; flex-shrink:0; }
+.todo-check{ position:relative; display:flex; align-items:center; gap:6px; flex:1 1 auto; min-width:0; cursor:pointer; }
+.todo-check input{ position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
+.todo-box{
+  position:relative;
+  width:11px; height:11px;
+  border-radius:3px;
+  border:1.5px solid #B9CBF7;
+  background:#FFFFFF;
+  flex-shrink:0;
+}
+.todo-check input:checked + .todo-box{ background:var(--blue-main); border-color:var(--blue-main); }
+.todo-check input:checked + .todo-box::after{
+  content:"";
+  position:absolute;
+  left:2.5px; top:0;
+  width:3px; height:6px;
+  border:solid #FFFFFF;
+  border-width:0 1.5px 1.5px 0;
+  transform:rotate(45deg);
+}
+.todo-check input:focus-visible + .todo-box{ outline:2px solid #B9CBF7; outline-offset:1px; }
+.todo-text{
+  font-size:10px;
+  line-height:1.3;
+  color:#474F61;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.todo-check input:checked ~ .todo-text{ color:#A3AAB8; text-decoration:line-through; }
+.todo-del{
+  width:14px; height:14px;
+  padding:0;
+  border:none;
+  border-radius:50%;
+  background:none;
+  color:#B6BDCB;
+  font-family:inherit;
+  font-size:12px;
+  line-height:1;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.todo-del:hover{ color:#E4573D; }
+.todo-empty{ font-size:9.5px; line-height:1.4; color:#8C94A3; padding:4px 0; }
+.todo-add{
+  display:flex;
+  gap:5px;
+  margin:6px 0 0;
+  flex-shrink:0;
+}
+.todo-input{
+  flex:1 1 auto;
+  min-width:0;
+  height:22px;
+  padding:0 10px;
+  border:1px solid #E1EBFA;
+  border-radius:999px;
+  background:#F7F9FF;
+  color:#22262E;
+  font-family:inherit;
+  font-size:10px;
+  outline:none;
+}
+.todo-input:focus{ border-color:var(--blue-main); background:#FFFFFF; }
+.todo-input::placeholder{ color:#A3AAB8; }
+.todo-submit{
+  height:22px;
+  padding:0 11px;
+  border:1px solid #E1EBFA;
+  border-radius:999px;
+  background:#EAF1FF;
+  color:#2E3F8F;
+  font-family:inherit;
+  font-weight:700;
+  font-size:9px;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.todo-submit:active{ transform:translateY(1px); }
+
 /* ---- settings modal (adapted from settings.html for inline use) ---- */
 .modal-backdrop{
   position:fixed; inset:0; background:rgba(34,38,46,0.32);
@@ -228,8 +345,20 @@ input[type="file"]{ display:none; }
     </div>
     <div class="corner-controls">
       <p class="status-line" id="totalLine"></p>
+      <button class="asmr-btn" id="todoBtn" type="button" data-state="off" aria-label="할 일 열기"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.2" y="1.2" width="9.6" height="9.6" rx="2.4"/><path d="M3.6 6.2l1.7 1.7 3.1-3.6"/></svg></button>
       <button class="asmr-btn" id="asmrToggle" type="button" data-state="off" aria-label="ASMR 켜기">♪</button>
       <button class="asmr-btn" id="settingsBtn" type="button" aria-label="설정 열기">⚙</button>
+    </div>
+    <div class="todo-panel" id="todoPanel">
+      <div class="todo-head">
+        <span class="todo-title">할 일</span>
+        <span class="todo-count" id="todoCount"></span>
+      </div>
+      <ul class="todo-list" id="todoList"></ul>
+      <form class="todo-add" id="todoForm" autocomplete="off">
+        <input class="todo-input" id="todoInput" type="text" maxlength="40" placeholder="할 일 추가" />
+        <button class="todo-submit" type="submit">추가</button>
+      </form>
     </div>
   </div>
   <div class="mascot-mask">
@@ -429,6 +558,90 @@ input[type="file"]{ display:none; }
     persist(); renderAsmrButton();
   }
   asmrBtn.addEventListener("click", toggleAsmr);
+
+  // ---- 할 일 목록 ----
+  var TODO_KEY = "gongcance_todos_v1";
+  var todoBtn = document.getElementById("todoBtn");
+  var todoPanel = document.getElementById("todoPanel");
+  var todoListEl = document.getElementById("todoList");
+  var todoFormEl = document.getElementById("todoForm");
+  var todoInputEl = document.getElementById("todoInput");
+  var todoCountEl = document.getElementById("todoCount");
+
+  function loadTodos(){
+    try{
+      var parsed = JSON.parse(window.localStorage.getItem(TODO_KEY));
+      if(!Array.isArray(parsed)) return [];
+      return parsed
+        .filter(function(t){ return t && typeof t.text === "string" && t.text; })
+        .map(function(t){ return { id: String(t.id || Math.random()), text: t.text, done: !!t.done }; });
+    }catch(e){ return []; }
+  }
+  var todos = loadTodos();
+  function saveTodos(){ try{ window.localStorage.setItem(TODO_KEY, JSON.stringify(todos)); }catch(e){} }
+  function renderTodoCount(){
+    var done = todos.filter(function(t){ return t.done; }).length;
+    todoCountEl.textContent = todos.length ? done + "/" + todos.length : "";
+  }
+  function renderTodos(){
+    todoListEl.innerHTML = "";
+    if(todos.length === 0){
+      var empty = document.createElement("li");
+      empty.className = "todo-empty";
+      empty.textContent = "오늘 할 일을 추가해보세요";
+      todoListEl.appendChild(empty);
+    }
+    todos.forEach(function(t){
+      var li = document.createElement("li");
+      li.className = "todo-item";
+      var label = document.createElement("label");
+      label.className = "todo-check";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = t.done;
+      cb.addEventListener("change", function(){ t.done = cb.checked; saveTodos(); renderTodoCount(); });
+      var box = document.createElement("span");
+      box.className = "todo-box";
+      var txt = document.createElement("span");
+      txt.className = "todo-text";
+      txt.textContent = t.text;
+      txt.title = t.text;
+      label.appendChild(cb); label.appendChild(box); label.appendChild(txt);
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "todo-del";
+      del.textContent = "×";
+      del.setAttribute("aria-label", "삭제");
+      del.addEventListener("click", function(){
+        todos = todos.filter(function(x){ return x !== t; });
+        saveTodos(); renderTodos();
+      });
+      li.appendChild(label); li.appendChild(del);
+      todoListEl.appendChild(li);
+    });
+    renderTodoCount();
+  }
+  function setTodoOpen(open){
+    todoPanel.classList.toggle("open", open);
+    document.body.classList.toggle("todo-open", open);
+    todoBtn.setAttribute("data-state", open ? "on" : "off");
+    todoBtn.setAttribute("aria-label", open ? "할 일 닫기" : "할 일 열기");
+    if(open){ todoInputEl.focus(); }
+  }
+  todoBtn.addEventListener("click", function(){ setTodoOpen(!todoPanel.classList.contains("open")); });
+  todoFormEl.addEventListener("submit", function(e){
+    e.preventDefault();
+    var text = todoInputEl.value.trim();
+    if(!text) return;
+    todos.push({ id: String(Date.now()) + Math.random().toString(36).slice(2, 6), text: text, done: false });
+    todoInputEl.value = "";
+    saveTodos(); renderTodos();
+    todoListEl.scrollTop = todoListEl.scrollHeight;
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && todoPanel.classList.contains("open")) setTodoOpen(false);
+  });
+  renderTodos();
 
   document.addEventListener("visibilitychange", function(){ if(!document.hidden){ renderGuidance(); } });
 
