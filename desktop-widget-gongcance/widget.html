@@ -284,7 +284,7 @@ body{
       <span class="brand-logo" aria-hidden="true">📖</span>
       <p class="guidance-line" id="guidanceText"><span class="guidance-label" id="guidanceLabel"></span></p>
       <p class="sub-line" id="subLine"></p>
-      <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">공부 시작</button>
+      <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">잠깐 쉬기</button>
     </div>
     <div class="corner-controls">
       <p class="status-line" id="totalLine"></p>
@@ -431,7 +431,7 @@ body{
       subLineEl.textContent = "";
     }
   }
-  function renderButton(){ btnEl.setAttribute("data-running", state.running?"true":"false"); btnEl.textContent = state.running?"공부 재개":"공부 시작"; }
+  function renderButton(){ btnEl.setAttribute("data-running", state.running?"true":"false"); btnEl.textContent = state.running?"공부 재개":"잠깐 쉬기"; }
   function renderTotal(){
     var totalMin = todayTotalMin(state);
     totalLineEl.innerHTML = "<span class=\"status-label\">오늘</span> <span class=\"status-time\">"+formatDuration(totalMin)+"</span><span class=\"status-count\"> · "+state.records.length+"회</span>";

@@ -329,7 +329,7 @@ input[type="file"]{ display:none; }
 <div class="page-head">
   <p class="eyebrow">STUDY EDITION</p>
   <h1>공캉스</h1>
-  <p>공부 시작을 누르면 타이머가 돌아가요. 자리를 비우면 쉬는 시간이 기록되고,<br/>마지막 쉼으로부터 얼마나 지났는지에 따라 문구가 바뀌어요.</p>
+  <p>잠깐 쉬기를 누르면 타이머가 돌아가요. 자리를 비우면 쉬는 시간이 기록되고,<br/>마지막 쉼으로부터 얼마나 지났는지에 따라 문구가 바뀌어요.</p>
 </div>
 
 <div class="dock-stage"></div>
@@ -341,7 +341,7 @@ input[type="file"]{ display:none; }
       <span class="brand-logo" aria-hidden="true">📖</span>
       <p class="guidance-line" id="guidanceText"><span class="guidance-label" id="guidanceLabel"></span></p>
       <p class="sub-line" id="subLine"></p>
-      <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">공부 시작</button>
+      <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">잠깐 쉬기</button>
     </div>
     <div class="corner-controls">
       <p class="status-line" id="totalLine"></p>
@@ -512,7 +512,7 @@ input[type="file"]{ display:none; }
       subLineEl.textContent = "";
     }
   }
-  function renderButton(){ btnEl.setAttribute("data-running", state.running?"true":"false"); btnEl.textContent = state.running?"공부 재개":"공부 시작"; }
+  function renderButton(){ btnEl.setAttribute("data-running", state.running?"true":"false"); btnEl.textContent = state.running?"공부 재개":"잠깐 쉬기"; }
   function renderTotal(){
     var totalMin = todayTotalMin(state);
     totalLineEl.innerHTML = "<span class=\"status-label\">오늘</span> <span class=\"status-time\">"+formatDuration(totalMin)+"</span><span class=\"status-count\"> · "+state.records.length+"회</span>";
