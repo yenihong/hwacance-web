@@ -45,13 +45,23 @@ function loadSettings(){
     const parsed = JSON.parse(raw);
     return {
       photoDataUrl: typeof parsed.photoDataUrl === "string" ? parsed.photoDataUrl : null,
+      photoSource: typeof parsed.photoSource === "string" ? parsed.photoSource : null,
+      photoCrop: sanitizeCrop(parsed.photoCrop),
       nickname: typeof parsed.nickname === "string" ? parsed.nickname : null,
       audioFile: typeof parsed.audioFile === "string" ? parsed.audioFile : null,
       audioName: typeof parsed.audioName === "string" ? parsed.audioName : null
     };
   }catch(e){
-    return { photoDataUrl: null, nickname: null, audioFile: null, audioName: null };
+    return { photoDataUrl: null, photoSource: null, photoCrop: null, nickname: null, audioFile: null, audioName: null };
   }
+}
+
+// 사진 편집 값(확대 배율과 틀 중심 위치)만 숫자로 걸러서 저장한다.
+function sanitizeCrop(crop){
+  if(!crop || typeof crop !== "object") return null;
+  const z = Number(crop.z), cx = Number(crop.cx), cy = Number(crop.cy);
+  if(!isFinite(z) || !isFinite(cx) || !isFinite(cy)) return null;
+  return { z: Math.min(4, Math.max(0.5, z)), cx: Math.min(3, Math.max(-2, cx)), cy: Math.min(3, Math.max(-2, cy)) };
 }
 
 function saveSettings(settings){
@@ -71,8 +81,15 @@ function withAudioUrl(settings){
   return out;
 }
 
+// 사진 원본은 설정창에서만 필요하다. 위젯에는 잘라낸 사진만 보낸다.
+function withoutPhotoSource(settings){
+  const out = Object.assign({}, settings);
+  delete out.photoSource;
+  return out;
+}
+
 function broadcastSettings(settings){
-  if(mainWindow){ mainWindow.webContents.send("settings:updated", withAudioUrl(settings)); }
+  if(mainWindow){ mainWindow.webContents.send("settings:updated", withoutPhotoSource(withAudioUrl(settings))); }
 }
 
 function removeAudioFile(fileName){
@@ -202,11 +219,18 @@ function createTray(){
   }
 }
 
-ipcMain.handle("settings:get", () => withAudioUrl(loadSettings()));
+ipcMain.handle("settings:get", (event) => {
+  const settings = withAudioUrl(loadSettings());
+  const fromSettingsWindow = settingsWindow && event.sender === settingsWindow.webContents;
+  return fromSettingsWindow ? settings : withoutPhotoSource(settings);
+});
 ipcMain.handle("settings:set", (_event, payload) => {
   const previous = loadSettings();
+  const photoDataUrl = (payload && payload.photoDataUrl) || null;
   const settings = Object.assign({}, previous, {
-    photoDataUrl: (payload && payload.photoDataUrl) || null,
+    photoDataUrl: photoDataUrl,
+    photoSource: photoDataUrl && payload && typeof payload.photoSource === "string" ? payload.photoSource : null,
+    photoCrop: photoDataUrl ? sanitizeCrop(payload && payload.photoCrop) : null,
     nickname: (payload && payload.nickname) || null
   });
   saveSettings(settings);
@@ -257,6 +281,9 @@ ipcMain.on("settings:close", () => {
 });
 ipcMain.on("settings:open", () => {
   createSettingsWindow();
+});
+ipcMain.on("app:quit", (event) => {
+  if(mainWindow && event.sender === mainWindow.webContents) app.quit();
 });
 ipcMain.on("telemetry:track", (_event, eventType, metadata) => {
   if(!RENDERER_EVENTS.includes(eventType)) return;

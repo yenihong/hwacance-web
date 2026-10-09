@@ -53,6 +53,7 @@ body{
   font-size:13px; line-height:15px;
   display:flex; align-items:center; justify-content:center;
 }
+.brand-row{ display:flex; align-items:center; gap:4px; height:15px; }
 .corner-controls{
   position:absolute;
   top:8px; right:8px;
@@ -106,6 +107,7 @@ body{
   line-height:1.364;
   color:#8C94A3;
   margin-top:0;
+  white-space:nowrap;
 }
 
 .status-line{
@@ -133,7 +135,6 @@ body{
   line-height:1.333;
   letter-spacing:-0.15px;
   padding:5px 12px;
-  margin-top:4px;
   white-space:nowrap;
   flex-shrink:0;
   cursor:pointer;
@@ -141,6 +142,63 @@ body{
 }
 .cta-btn[data-running="true"]{ background:#E9F0FF; }
 .cta-btn:active{ transform:translateY(1px); }
+.start-view{
+  position:absolute;
+  left:13px; top:50%;
+  transform:translateY(-50%);
+  width:148px;
+  display:none;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:5px;
+  z-index:3;
+}
+.starting .start-view{ display:flex; }
+.starting .content, .starting .status-line{ visibility:hidden; }
+.start-title{
+  font-size:13.5px; font-weight:700; color:#474F61;
+  line-height:1.267; letter-spacing:-0.27px;
+  word-break:keep-all; overflow-wrap:break-word;
+}
+.start-sub{ font-size:9.9px; line-height:1.364; color:#8C94A3; }
+.start-btn{
+  border:none;
+  border-radius:999px;
+  background:var(--blue-main);
+  color:#FFFFFF;
+  font-family:inherit;
+  font-weight:700;
+  font-size:10px;
+  line-height:1.333;
+  letter-spacing:-0.15px;
+  padding:6px 16px;
+  margin-top:3px;
+  white-space:nowrap;
+  cursor:pointer;
+  -webkit-app-region:no-drag;
+}
+.start-btn:active{ transform:translateY(1px); }
+.cta-row{ display:flex; align-items:center; gap:5px; margin-top:4px; }
+.end-btn{
+  border:1px solid #E6E9F0;
+  border-radius:999px;
+  background:#FFFFFF;
+  color:#8C94A3;
+  font-family:inherit;
+  font-weight:700;
+  font-size:8px;
+  line-height:1.333;
+  letter-spacing:-0.1px;
+  padding:4px 8px;
+  white-space:nowrap;
+  flex-shrink:0;
+  cursor:pointer;
+  -webkit-app-region:no-drag;
+}
+.end-btn:hover{ color:#E4573D; border-color:#F6D5CE; }
+.end-btn[data-confirm="true"]{ background:#FFF1EE; color:#E4573D; border-color:#F6D5CE; }
+.end-btn:active{ transform:translateY(1px); }
+.end-btn:disabled, .cta-btn:disabled{ opacity:.5; cursor:default; }
 
 .mascot-mask{
   position:absolute;
@@ -194,7 +252,29 @@ body{
 }
 .todo-list::-webkit-scrollbar{ width:3px; }
 .todo-list::-webkit-scrollbar-thumb{ background:#D5DDF0; border-radius:2px; }
-.todo-item{ display:flex; align-items:center; gap:4px; min-height:19px; flex-shrink:0; }
+.todo-item{ position:relative; display:flex; align-items:center; gap:4px; min-height:19px; flex-shrink:0; border-radius:5px; }
+.todo-item.dragging{ z-index:3; background:#F2F6FF; box-shadow:0 2px 8px rgba(76,107,219,.22); }
+.todo-list.sorting .todo-item:not(.dragging){ transition:transform .15s ease; }
+.todo-grip{
+  width:8px; height:16px; padding:0; border:none; background:none;
+  color:#C5CCDA; cursor:grab; flex-shrink:0; touch-action:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.todo-grip svg{ width:6px; height:10px; display:block; }
+.todo-grip:hover{ color:#8C94A3; }
+.todo-item.dragging .todo-grip{ cursor:grabbing; color:var(--blue-main); }
+.todo-edit-btn{
+  width:14px; height:14px; padding:0; border:none; background:none;
+  color:#B6BDCB; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.todo-edit-btn svg{ width:9px; height:9px; display:block; }
+.todo-edit-btn:hover{ color:var(--blue-main); }
+.todo-edit{
+  flex:1 1 auto; min-width:0; height:17px; padding:0 6px;
+  border:1px solid var(--blue-main); border-radius:6px; background:#FFFFFF;
+  color:#22262E; font-family:inherit; font-size:10px; outline:none;
+}
 .todo-check{ position:relative; display:flex; align-items:center; gap:6px; flex:1 1 auto; min-width:0; cursor:pointer; }
 .todo-check input{ position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
 .todo-box{
@@ -278,13 +358,24 @@ body{
 .todo-submit:active{ transform:translateY(1px); }
 </style>
 </head>
-<body>
+<body class="starting">
   <div class="card">
     <div class="content">
-      <span class="brand-logo" aria-hidden="true">📖</span>
+      <div class="brand-row">
+        <span class="brand-logo" aria-hidden="true">📖</span>
+      </div>
       <p class="guidance-line" id="guidanceText"><span class="guidance-label" id="guidanceLabel"></span></p>
       <p class="sub-line" id="subLine"></p>
-      <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">잠깐 쉬기</button>
+      <div class="cta-row">
+        <button class="cta-btn" id="stopwatchBtn" type="button" data-running="false">잠깐 쉬기</button>
+        <button class="end-btn" id="endBtn" type="button" data-confirm="false">공부 종료</button>
+      </div>
+    </div>
+    <div class="start-view">
+      <span class="brand-logo" aria-hidden="true">📖</span>
+      <p class="start-title" id="startTitle">오늘도 같이 집중해볼까요?</p>
+      <p class="start-sub">시작하면 공부 시간이 기록돼요</p>
+      <button class="start-btn" id="startBtn" type="button">공부 시작</button>
     </div>
     <div class="corner-controls">
       <p class="status-line" id="totalLine"></p>
@@ -318,14 +409,15 @@ body{
   var STORAGE_KEY = "hwacance_study_v1";
   function todayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function loadState(){
-    var fallback = { dateKey: todayKey(), records: [], asmrOn:false, running:false, startedAt:null, lastRecordedAt:null };
+    // studyMs: 오늘 위젯이 켜져 있는 동안 쉬는 중이 아니었던 시간. 꺼져 있던 시간은 세지 않는다.
+    var fallback = { dateKey: todayKey(), records: [], asmrOn:false, running:false, startedAt:null, lastRecordedAt:null, studyMs:0, studyTickAt:Date.now() };
     try{
       var raw = window.localStorage.getItem(STORAGE_KEY);
       if(!raw) return fallback;
       var parsed = JSON.parse(raw);
       if(!parsed || typeof parsed!=="object") return fallback;
       if(parsed.dateKey !== todayKey()){
-        return { dateKey: todayKey(), records:[], asmrOn:!!parsed.asmrOn, running:false, startedAt:null, lastRecordedAt: parsed.lastRecordedAt||null };
+        return { dateKey: todayKey(), records:[], asmrOn:!!parsed.asmrOn, running:false, startedAt:null, lastRecordedAt:null, studyMs:0, studyTickAt:Date.now() };
       }
       return {
         dateKey: parsed.dateKey||todayKey(),
@@ -333,7 +425,9 @@ body{
         asmrOn: !!parsed.asmrOn,
         running: !!parsed.running,
         startedAt: parsed.startedAt||null,
-        lastRecordedAt: parsed.lastRecordedAt||null
+        lastRecordedAt: parsed.lastRecordedAt||null,
+        studyMs: Math.max(0, Number(parsed.studyMs) || 0),
+        studyTickAt: Date.now()
       };
     }catch(e){ return fallback; }
   }
@@ -382,6 +476,24 @@ body{
   function todayTotalMin(state){ return state.records.reduce(function(s,r){return s+(r.durationMin||0);},0); }
 
   var state = loadState();
+  // 누적 공부 시간: 쉬는 중이 아닐 때만 더한다. 컴퓨터가 잠들어 생긴 긴 공백(90초 초과)은 건너뛴다.
+  var STUDY_GAP_LIMIT = 90000;
+  var started = false; // "공부 시작하기"를 누르기 전에는 공부 시간을 세지 않는다.
+  function accrueStudy(){
+    var now = Date.now();
+    if(!started){ state.studyTickAt = now; return; }
+    if(!state.running && state.studyTickAt){
+      var d = now - state.studyTickAt;
+      if(d > 0 && d <= STUDY_GAP_LIMIT) state.studyMs += d;
+    }
+    state.studyTickAt = now;
+  }
+  function currentStudyMs(){
+    if(!started) return state.studyMs;
+    var d = Date.now() - state.studyTickAt;
+    if(state.running || d < 0 || d > STUDY_GAP_LIMIT) d = 0;
+    return state.studyMs + d;
+  }
   var guidanceEl = document.getElementById("guidanceText");
   var guidanceLabelEl = document.getElementById("guidanceLabel");
   var subLineEl = document.getElementById("subLine");
@@ -394,6 +506,14 @@ body{
   var currentNickname = null;
   var currentHasCustomPhoto = false;
   function renderGuidance(){
+    renderStart();
+    if(closingSummary){
+      guidanceEl.setAttribute("data-tier", "green");
+      guidanceLabelEl.removeAttribute("data-wave-text");
+      guidanceLabelEl.textContent = "오늘도 수고했어요!";
+      subLineEl.textContent = "총 공부 " + closingSummary.study + " · 쉼 " + closingSummary.breaks + "회";
+      return;
+    }
     var g = guidance(state);
     if(g.tier === "first" && currentNickname){
       g = { text: currentNickname + ", 나랑 같이 집중해보자!", tier: "first" };
@@ -423,28 +543,42 @@ body{
         guidanceLabelEl.textContent = g.text;
       }
     }
-    if(state.running && state.startedAt){
-      subLineEl.textContent = formatElapsed(Date.now()-state.startedAt) + " 경과";
-    } else if(typeof g.elapsedMin === "number"){
-      subLineEl.textContent = "마지막 쉼 · " + formatDuration(g.elapsedMin) + " 전";
-    } else {
-      subLineEl.textContent = "";
-    }
+    renderSubLine(g);
+  }
+  // 마지막 쉼(또는 쉬는 시간 경과)을 보여준다. 총 공부 시간은 오른쪽 위 상태줄에 있다.
+  function renderSubLine(g){
+    if(state.running && state.startedAt) subLineEl.textContent = formatElapsed(Date.now()-state.startedAt) + " 경과";
+    else if(typeof g.elapsedMin === "number") subLineEl.textContent = "마지막 쉼 · " + formatDuration(g.elapsedMin) + " 전";
+    else subLineEl.textContent = "오늘은 아직 쉬지 않았어요";
   }
   function renderButton(){ btnEl.setAttribute("data-running", state.running?"true":"false"); btnEl.textContent = state.running?"공부 재개":"잠깐 쉬기"; }
   function renderTotal(){
-    var totalMin = todayTotalMin(state);
-    totalLineEl.innerHTML = "<span class=\"status-label\">오늘</span> <span class=\"status-time\">"+formatDuration(totalMin)+"</span><span class=\"status-count\"> · "+state.records.length+"회</span>";
+    totalLineEl.innerHTML = "<span class=\"status-label\">총 공부</span> <span class=\"status-time\">"+formatDuration(currentStudyMs() / 60000)+"</span>";
   }
   function renderAll(){ renderGuidance(); renderButton(); renderTotal(); }
   function persist(){ saveState(state); }
   function startTicking(){
     stopTicking();
     var intervalMs = state.running?1000:30000;
-    tickHandle = setInterval(renderGuidance, intervalMs);
+    tickHandle = setInterval(tick, intervalMs);
   }
+  function tick(){
+    if(closingSummary) return;
+    // 위젯을 켜 둔 채 자정이 지나면 오늘 기록을 비우고 새 하루로 시작한다(쉬는 중이면 쉼이 끝난 뒤).
+    if(state.dateKey !== todayKey() && !state.running){
+      state.dateKey = todayKey();
+      state.records = []; state.lastRecordedAt = null; state.studyMs = 0; state.studyTickAt = Date.now();
+      persist(); renderTotal();
+    }
+    accrueStudy();
+    if(!state.running) persist();
+    renderGuidance();
+    renderTotal();
+  }
+  window.addEventListener("beforeunload", function(){ if(!closingSummary) accrueStudy(); persist(); });
   function stopTicking(){ if(tickHandle){ clearInterval(tickHandle); tickHandle=null; } }
   function toggleStopwatch(){
+    accrueStudy();
     if(state.running){
       var endedAt = Date.now();
       var durationMin = Math.max(0,(endedAt-state.startedAt)/60000);
@@ -461,6 +595,66 @@ body{
     persist(); renderAll(); startTicking();
   }
   btnEl.addEventListener("click", toggleStopwatch);
+
+  // 앱을 켜면 시작 화면이 먼저 나오고, "공부 시작하기"를 누르면 메인 화면으로 넘어간다.
+  document.getElementById("startBtn").addEventListener("click", function(){
+    started = true;
+    state.studyTickAt = Date.now();
+    document.body.classList.remove("starting");
+    renderAll(); startTicking();
+  });
+  function renderStart(){
+    document.getElementById("startTitle").textContent = (currentHasCustomPhoto && currentNickname)
+      ? currentNickname + ", 오늘도 같이 집중해볼까?"
+      : "오늘도 같이 집중해볼까요?";
+  }
+
+  // 공부 종료: 한 번 더 눌러야 끝난다. 쉬는 중이면 그 쉼도 기록하고, 오늘 요약을 잠깐 보여준 뒤 위젯을 닫는다.
+  var endBtnEl = document.getElementById("endBtn");
+  var endConfirmTimer = null;
+  var closingSummary = null;
+  function resetEndConfirm(){
+    if(endConfirmTimer){ clearTimeout(endConfirmTimer); endConfirmTimer = null; }
+    endBtnEl.setAttribute("data-confirm", "false");
+    endBtnEl.textContent = "공부 종료";
+  }
+  function finishStudy(){
+    accrueStudy();
+    if(state.running){
+      var endedAt = Date.now();
+      var durationMin = Math.max(0,(endedAt-state.startedAt)/60000);
+      state.records.push({ id:String(endedAt), startedAt:state.startedAt, endedAt:endedAt, durationMin:durationMin });
+      state.lastRecordedAt = endedAt;
+      state.running = false;
+      state.startedAt = null;
+      track("break_ended", { breakMinutes: Math.round(durationMin * 10) / 10 });
+    }
+    state.studyTickAt = Date.now();
+    persist();
+    stopTicking();
+    closingSummary = {
+      study: formatDuration(state.studyMs / 60000),
+      breaks: state.records.length
+    };
+    // 공부 종료는 하루의 끝: 다음에 켜면 기록 없이 처음부터 시작한다(요약은 지금 화면에만 남는다).
+    state.records = [];
+    state.lastRecordedAt = null;
+    state.studyMs = 0;
+    persist();
+    btnEl.disabled = true; endBtnEl.disabled = true;
+    resetEndConfirm();
+    renderGuidance(); renderButton();
+    setTimeout(function(){
+      if(window.hwacanceSettings && window.hwacanceSettings.quitApp) window.hwacanceSettings.quitApp();
+    }, 2200);
+  }
+  endBtnEl.addEventListener("click", function(){
+    if(closingSummary) return;
+    if(endBtnEl.getAttribute("data-confirm") === "true"){ finishStudy(); return; }
+    endBtnEl.setAttribute("data-confirm", "true");
+    endBtnEl.textContent = "진짜로..? :(";
+    endConfirmTimer = setTimeout(resetEndConfirm, 3000);
+  });
 
   var customAudioUrl = null;
   function ensureAsmrSrc(){
@@ -536,6 +730,8 @@ body{
     var done = todos.filter(function(t){ return t.done; }).length;
     todoCountEl.textContent = todos.length ? done + "/" + todos.length : "";
   }
+  var GRIP_SVG = '<svg viewBox="0 0 6 10" fill="currentColor"><circle cx="1.2" cy="1.5" r="1"/><circle cx="4.8" cy="1.5" r="1"/><circle cx="1.2" cy="5" r="1"/><circle cx="4.8" cy="5" r="1"/><circle cx="1.2" cy="8.5" r="1"/><circle cx="4.8" cy="8.5" r="1"/></svg>';
+  var PENCIL_SVG = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8.2 1.8l2 2L4 10l-2.6.6L2 8z"/></svg>';
   function renderTodos(){
     todoListEl.innerHTML = "";
     if(todos.length === 0){
@@ -547,6 +743,13 @@ body{
     todos.forEach(function(t){
       var li = document.createElement("li");
       li.className = "todo-item";
+      var grip = document.createElement("button");
+      grip.type = "button";
+      grip.className = "todo-grip";
+      grip.innerHTML = GRIP_SVG;
+      grip.setAttribute("aria-label", "끌어서 순서 바꾸기");
+      grip.title = "끌어서 순서 바꾸기";
+      grip.addEventListener("pointerdown", function(e){ startDrag(e, li, t, grip); });
       var label = document.createElement("label");
       label.className = "todo-check";
       var cb = document.createElement("input");
@@ -563,6 +766,13 @@ body{
       txt.textContent = t.text;
       txt.title = t.text;
       label.appendChild(cb); label.appendChild(box); label.appendChild(txt);
+      var edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "todo-edit-btn";
+      edit.innerHTML = PENCIL_SVG;
+      edit.setAttribute("aria-label", "수정");
+      edit.title = "수정";
+      edit.addEventListener("click", function(){ startEdit(li, label, edit, t); });
       var del = document.createElement("button");
       del.type = "button";
       del.className = "todo-del";
@@ -572,10 +782,96 @@ body{
         todos = todos.filter(function(x){ return x !== t; });
         saveTodos(); renderTodos();
       });
-      li.appendChild(label); li.appendChild(del);
+      li.appendChild(grip); li.appendChild(label); li.appendChild(edit); li.appendChild(del);
       todoListEl.appendChild(li);
     });
     renderTodoCount();
+  }
+
+  // 글 수정: 연필을 누르면 그 자리에서 입력칸으로 바뀌고, Enter/바깥 클릭은 저장, Esc는 취소한다.
+  function startEdit(li, label, editBtn, t){
+    var input = document.createElement("input");
+    input.type = "text";
+    input.className = "todo-edit";
+    input.maxLength = 40;
+    input.value = t.text;
+    var finished = false;
+    function finish(save){
+      if(finished) return;
+      finished = true;
+      var next = input.value.trim();
+      if(save && next && next !== t.text){ t.text = next; saveTodos(); }
+      renderTodos();
+    }
+    input.addEventListener("keydown", function(e){
+      if(e.key === "Enter"){ e.preventDefault(); finish(true); }
+      else if(e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); finish(false); }
+    });
+    input.addEventListener("blur", function(){ finish(true); });
+    li.replaceChild(input, label);
+    editBtn.style.display = "none";
+    input.focus();
+    input.select();
+  }
+
+  // 순서 바꾸기: 왼쪽 점 손잡이를 잡고 위아래로 끌면 다른 항목이 비켜 주고, 놓으면 그 자리에 저장된다.
+  function startDrag(e, li, t, grip){
+    if(e.button !== undefined && e.button !== 0) return;
+    var items = Array.prototype.slice.call(todoListEl.querySelectorAll(".todo-item"));
+    if(items.length < 2) return;
+    e.preventDefault();
+    var from = items.indexOf(li);
+    var step = li.offsetHeight + 1;
+    var startY = e.clientY;
+    var startScroll = todoListEl.scrollTop;
+    var lastY = e.clientY;
+    var target = from;
+    var raf = 0;
+    grip.setPointerCapture(e.pointerId);
+    li.classList.add("dragging");
+    todoListEl.classList.add("sorting");
+
+    function layout(){
+      var dy = lastY - startY + (todoListEl.scrollTop - startScroll);
+      var minDy = -from * step, maxDy = (items.length - 1 - from) * step;
+      dy = Math.max(minDy, Math.min(maxDy, dy));
+      li.style.transform = "translateY(" + dy + "px)";
+      target = Math.max(0, Math.min(items.length - 1, from + Math.round(dy / step)));
+      items.forEach(function(other, j){
+        if(other === li) return;
+        var shift = 0;
+        if(target > from && j > from && j <= target) shift = -step;
+        else if(target < from && j >= target && j < from) shift = step;
+        other.style.transform = shift ? "translateY(" + shift + "px)" : "";
+      });
+    }
+    // 목록 가장자리 근처에서 끌면 자동으로 스크롤된다.
+    function autoScroll(){
+      var r = todoListEl.getBoundingClientRect();
+      if(lastY < r.top + 12) todoListEl.scrollTop -= 3;
+      else if(lastY > r.bottom - 12) todoListEl.scrollTop += 3;
+      layout();
+      raf = requestAnimationFrame(autoScroll);
+    }
+    function onMove(ev){ lastY = ev.clientY; layout(); }
+    function onEnd(ev){
+      grip.removeEventListener("pointermove", onMove);
+      grip.removeEventListener("pointerup", onEnd);
+      grip.removeEventListener("pointercancel", onEnd);
+      cancelAnimationFrame(raf);
+      try{ grip.releasePointerCapture(ev.pointerId); }catch(err){}
+      if(ev.type !== "pointercancel" && target !== from){
+        todos.splice(from, 1);
+        todos.splice(target, 0, t);
+        saveTodos();
+      }
+      renderTodos();
+    }
+    grip.addEventListener("pointermove", onMove);
+    grip.addEventListener("pointerup", onEnd);
+    grip.addEventListener("pointercancel", onEnd);
+    raf = requestAnimationFrame(autoScroll);
+    layout();
   }
   function setTodoOpen(open){
     todoPanel.classList.toggle("open", open);

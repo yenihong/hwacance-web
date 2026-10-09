@@ -25,21 +25,59 @@
   }
   h1{ font-size:16px; font-weight:800; }
   .sub{ font-size:12px; color:var(--ink-soft); text-align:center; line-height:1.5; }
-  .preview-wrap{
-    width:140px; height:140px;
-    border-radius:24px;
-    background:var(--blue-grid);
-    display:flex; align-items:center; justify-content:center;
+
+  /* 사진 편집기: 위젯 마스코트와 같은 비율(81:99)의 틀 안에서 드래그/확대로 맞춘다. */
+  .editor-frame{
+    position:relative;
+    width:122px; height:149px;
+    border-radius:10px;
+    background:#F4F7FF;
+    box-shadow:0 0 0 1px #E1EBFA;
     overflow:hidden;
-    border:2px solid var(--blue-grid);
     cursor:pointer;
     flex-shrink:0;
+    touch-action:none;
+    user-select:none;
   }
-  .preview-wrap img{ width:100%; height:100%; object-fit:cover; display:none; }
-  .preview-wrap .placeholder{ font-size:64px; line-height:1; }
-  .hint{ font-size:11px; color:var(--ink-soft); }
+  .editor-frame.has-img{ cursor:grab; }
+  .editor-frame:focus-visible{ outline:2px solid var(--blue-main); outline-offset:2px; }
+  .editor-frame.dragging{ cursor:grabbing; }
+  .editor-frame img{ position:absolute; left:0; top:0; max-width:none; display:none; pointer-events:none; user-select:none; }
+  .editor-frame .placeholder{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:44px; line-height:1; }
+  /* 위젯에서 실제로 보이는 영역(둥근 창). 바깥은 흐리게 보여준다. */
+  .editor-window{
+    position:absolute;
+    left:3px; right:3px; top:3px; bottom:3px;
+    border-radius:21px;
+    border:1.5px solid rgba(100,133,246,.8);
+    box-shadow:0 0 0 200px rgba(255,255,255,.66);
+    pointer-events:none;
+  }
+  .zoom-row{ display:flex; align-items:center; gap:8px; width:190px; flex-shrink:0; }
+  .zoom-row.disabled{ opacity:.4; pointer-events:none; }
+  .zoom-row input[type="range"]{ flex:1; min-width:0; height:16px; margin:0; background:transparent; cursor:pointer; -webkit-appearance:none; appearance:none; }
+  .zoom-row input[type="range"]::-webkit-slider-runnable-track{
+    height:4px; border-radius:999px;
+    background:linear-gradient(to right, var(--blue-main) var(--p, 0%), var(--blue-grid) var(--p, 0%));
+  }
+  .zoom-row input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:14px; height:14px; margin-top:-5px;
+    border-radius:50%; border:2px solid #fff; background:var(--blue-main);
+    box-shadow:0 0 0 1px var(--blue-main);
+  }
+  .zoom-row input[type="range"]:focus-visible{ outline:2px solid var(--blue-grid); outline-offset:3px; border-radius:6px; }
+  .zoom-btn{
+    width:22px; height:22px; padding:0;
+    border-radius:50%;
+    border:2px solid var(--blue-grid);
+    background:#fff; color:var(--blue-accent);
+    font-family:inherit; font-size:14px; font-weight:700; line-height:1;
+    cursor:pointer; flex-shrink:0;
+  }
+  .hint{ font-size:11px; color:var(--ink-soft); text-align:center; }
   input[type="file"]{ display:none; }
-  .btn-row{ display:flex; gap:8px; margin-top:2px; }
+  .btn-row{ display:flex; gap:8px; }
   .btn{
     border:none;
     border-radius:999px;
@@ -67,7 +105,8 @@
   .field-hint{ font-size:10.5px; color:var(--ink-soft); }
   .footer-row{ margin-top:auto; display:flex; gap:8px; width:100%; padding-top:8px; }
   .footer-row .btn{ flex:1; }
-  .error{ font-size:11.5px; color:#E4573D; min-height:14px; }
+  .error{ font-size:11.5px; color:#E4573D; }
+  .error:empty{ display:none; }
   .audio-row{ display:flex; align-items:center; gap:6px; }
   .audio-name{
     flex:1; min-width:0;
@@ -83,19 +122,26 @@
 </head>
 <body>
   <h1>공캉스 위젯 설정</h1>
-  <p class="sub">위젯 아이콘으로 표시할 사진을 선택해주세요. <br/>TIP: 배경이 없는 사진이 더 깔끔하게 나와요!<br/>*미선택 시, 기본 이미지로 표시됩니다.</p>
+  <p class="sub">위젯 사진을 골라 위치와 크기를 맞춰보세요.<br/>TIP: 배경이 없는 사진이 더 깔끔하게 나와요!</p>
 
-  <div class="preview-wrap" id="previewWrap">
+  <div class="editor-frame" id="editorFrame" tabindex="0">
     <span class="placeholder" id="previewPlaceholder">📖</span>
-    <img id="previewImg" alt="미리보기" />
+    <img id="editorImg" alt="" draggable="false" />
+    <div class="editor-window" aria-hidden="true"></div>
+  </div>
+  <div class="zoom-row disabled" id="zoomRow">
+    <button class="zoom-btn" id="zoomOut" type="button" aria-label="축소">−</button>
+    <input type="range" id="zoomRange" min="50" max="400" step="1" value="100" aria-label="사진 확대" />
+    <button class="zoom-btn" id="zoomIn" type="button" aria-label="확대">+</button>
   </div>
   <p class="hint" id="hintText">클릭해서 사진 선택</p>
-  <p class="error" id="errorText"></p>
   <input type="file" id="fileInput" accept="image/*" />
 
   <div class="btn-row">
-    <button class="btn btn-ghost" id="resetBtn" type="button">기본 이미지로 되돌리기</button>
+    <button class="btn btn-ghost btn-small" id="pickBtn" type="button">사진 선택</button>
+    <button class="btn btn-ghost btn-small" id="resetBtn" type="button">기본 이미지로 되돌리기</button>
   </div>
+  <p class="error" id="errorText"></p>
 
   <div class="field">
     <label for="nicknameInput">닉네임 (선택)</label>
@@ -121,32 +167,200 @@
 <script>
 (function(){
   "use strict";
-  var previewWrap = document.getElementById("previewWrap");
-  var previewImg = document.getElementById("previewImg");
-  var previewPlaceholder = document.getElementById("previewPlaceholder");
+  var frame = document.getElementById("editorFrame");
+  var editorImg = document.getElementById("editorImg");
+  var placeholder = document.getElementById("previewPlaceholder");
+  var zoomRow = document.getElementById("zoomRow");
+  var zoomRange = document.getElementById("zoomRange");
+  var zoomInBtn = document.getElementById("zoomIn");
+  var zoomOutBtn = document.getElementById("zoomOut");
   var fileInput = document.getElementById("fileInput");
   var hintText = document.getElementById("hintText");
   var errorText = document.getElementById("errorText");
+  var pickBtn = document.getElementById("pickBtn");
   var resetBtn = document.getElementById("resetBtn");
   var saveBtn = document.getElementById("saveBtn");
   var closeBtn = document.getElementById("closeBtn");
   var nicknameInput = document.getElementById("nicknameInput");
 
   var MAX_BYTES = 4 * 1024 * 1024; // 4MB
-  var pendingDataUrl = null; // null = 변경 없음, "" = 기본값으로 리셋 예정, 그 외 = 새 이미지
-  var loadedPhotoDataUrl = null;
+  var FRAME_W = 122, FRAME_H = 149;          // 편집 틀(화면 크기)
+  var OUT_W = 243, OUT_H = 297;              // 저장되는 사진 크기 (위젯 마스코트 81×99의 3배)
+  var MIN_ZOOM = 0.5, MAX_ZOOM = 4;           // 0.5배까지 줄이면 틀 안에서 사진을 자유롭게 옮길 수 있다(남는 곳은 투명)
 
-  function showPhoto(dataUrl){
-    previewImg.src = dataUrl;
-    previewImg.style.display = "block";
-    previewPlaceholder.style.display = "none";
+  // 편집기 상태: z=확대 배율(1=틀을 꽉 채움), ox/oy=사진 왼쪽 위 모서리의 틀 안 위치(px)
+  var ed = { img:null, source:null, nw:0, nh:0, z:1, ox:0, oy:0, dirty:false };
+  var saved = { photoDataUrl:null, photoSource:null, photoCrop:null }; // 설정창을 열 때 저장돼 있던 값
+  var resetPending = false;
+
+  function scale(){ return Math.max(FRAME_W / ed.nw, FRAME_H / ed.nh) * ed.z; }
+  // 사진이 틀보다 크면 틀을 벗어나 빈 곳이 생기지 않게, 작으면 틀 밖으로 나가지 않게 막는다.
+  function clampAxis(off, size, frame){
+    var lo = Math.min(0, frame - size), hi = Math.max(0, frame - size);
+    return Math.min(hi, Math.max(lo, off));
   }
-  function showPlaceholder(){
-    previewImg.style.display = "none";
-    previewImg.removeAttribute("src");
-    previewPlaceholder.style.display = "block";
+  function clampOffset(){
+    var s = scale();
+    ed.ox = clampAxis(ed.ox, ed.nw * s, FRAME_W);
+    ed.oy = clampAxis(ed.oy, ed.nh * s, FRAME_H);
+  }
+  function moveBy(dx, dy){
+    if(!ed.img) return;
+    ed.ox += dx; ed.oy += dy;
+    clampOffset();
+    ed.dirty = true;
+    render();
+  }
+  function render(){
+    var s = scale();
+    editorImg.style.width = (ed.nw * s) + "px";
+    editorImg.style.height = (ed.nh * s) + "px";
+    editorImg.style.left = ed.ox + "px";
+    editorImg.style.top = ed.oy + "px";
+    zoomRange.value = String(Math.round(ed.z * 100));
+    zoomRange.style.setProperty("--p", ((ed.z - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM) * 100) + "%");
+  }
+  // 틀 안의 (ax, ay) 지점이 제자리에 머물도록 확대/축소한다.
+  function setZoom(z, ax, ay){
+    if(!ed.img) return;
+    z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+    var s0 = scale();
+    var px = (ax - ed.ox) / s0, py = (ay - ed.oy) / s0;
+    ed.z = z;
+    var s1 = scale();
+    ed.ox = ax - px * s1;
+    ed.oy = ay - py * s1;
+    clampOffset();
+    ed.dirty = true;
+    render();
   }
 
+  function showEmpty(){
+    ed.img = null; ed.source = null;
+    editorImg.style.display = "none";
+    editorImg.removeAttribute("src");
+    placeholder.style.display = "flex";
+    frame.classList.remove("has-img");
+    zoomRow.classList.add("disabled");
+    zoomRange.value = "100";
+    zoomRange.style.setProperty("--p", ((1 - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM) * 100) + "%");
+    hintText.textContent = "클릭해서 사진 선택";
+  }
+  // crop = 저장해 둔 {z, cx, cy}(cx,cy: 틀 중심이 가리키는 사진 위치, 0~1). 없으면 가운데 맞춤.
+  function loadIntoEditor(dataUrl, crop, markDirty){
+    var img = new Image();
+    img.onload = function(){
+      ed.img = img; ed.source = dataUrl;
+      ed.nw = img.naturalWidth; ed.nh = img.naturalHeight;
+      ed.z = 1; ed.ox = 0; ed.oy = 0;
+      if(crop && isFinite(crop.z) && isFinite(crop.cx) && isFinite(crop.cy)){
+        ed.z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, crop.z));
+        var s = scale();
+        ed.ox = FRAME_W / 2 - crop.cx * ed.nw * s;
+        ed.oy = FRAME_H / 2 - crop.cy * ed.nh * s;
+      } else {
+        var s0 = scale();
+        ed.ox = (FRAME_W - ed.nw * s0) / 2;
+        ed.oy = (FRAME_H - ed.nh * s0) / 2;
+      }
+      clampOffset();
+      ed.dirty = !!markDirty;
+      editorImg.src = dataUrl;
+      editorImg.style.display = "block";
+      placeholder.style.display = "none";
+      frame.classList.add("has-img");
+      zoomRow.classList.remove("disabled");
+      hintText.textContent = "드래그로 이동 · 휠이나 슬라이더로 확대";
+      render();
+    };
+    img.onerror = function(){
+      errorText.textContent = "이 사진은 불러올 수 없어요, 다른 사진으로 시도해주세요";
+    };
+    img.src = dataUrl;
+  }
+
+  function cropParams(){
+    var s = scale();
+    return {
+      z: Math.round(ed.z * 1000) / 1000,
+      cx: Math.round(((FRAME_W / 2 - ed.ox) / (ed.nw * s)) * 10000) / 10000,
+      cy: Math.round(((FRAME_H / 2 - ed.oy) / (ed.nh * s)) * 10000) / 10000
+    };
+  }
+  // 틀 안에 보이는 부분을 위젯 사진 크기로 잘라낸다(투명 배경은 그대로 유지).
+  function exportCrop(){
+    var s = scale();
+    var c = document.createElement("canvas");
+    c.width = OUT_W; c.height = OUT_H;
+    var ctx = c.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.scale(OUT_W / FRAME_W, OUT_H / FRAME_H);
+    ctx.drawImage(ed.img, ed.ox, ed.oy, ed.nw * s, ed.nh * s);
+    return c.toDataURL("image/png");
+  }
+
+  // 드래그로 위치 이동
+  var drag = null;
+  frame.addEventListener("pointerdown", function(e){
+    if(!ed.img){ fileInput.click(); return; }
+    drag = { x:e.clientX, y:e.clientY, ox:ed.ox, oy:ed.oy };
+    frame.setPointerCapture(e.pointerId);
+    frame.classList.add("dragging");
+  });
+  frame.addEventListener("pointermove", function(e){
+    if(!drag) return;
+    ed.ox = drag.ox + (e.clientX - drag.x);
+    ed.oy = drag.oy + (e.clientY - drag.y);
+    clampOffset();
+    ed.dirty = true;
+    render();
+  });
+  function endDrag(){ drag = null; frame.classList.remove("dragging"); }
+  frame.addEventListener("pointerup", endDrag);
+  frame.addEventListener("pointercancel", endDrag);
+  frame.addEventListener("wheel", function(e){
+    if(!ed.img) return;
+    e.preventDefault();
+    var r = frame.getBoundingClientRect();
+    setZoom(ed.z * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - r.left, e.clientY - r.top);
+  }, { passive:false });
+
+  zoomRange.addEventListener("input", function(){ setZoom(Number(zoomRange.value) / 100, FRAME_W / 2, FRAME_H / 2); });
+  zoomInBtn.addEventListener("click", function(){ setZoom(ed.z + 0.25, FRAME_W / 2, FRAME_H / 2); });
+  zoomOutBtn.addEventListener("click", function(){ setZoom(ed.z - 0.25, FRAME_W / 2, FRAME_H / 2); });
+
+  frame.addEventListener("keydown", function(e){
+    var step = e.shiftKey ? 10 : 2;
+    var d = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1] }[e.key];
+    if(!d || !ed.img) return;
+    e.preventDefault();
+    moveBy(d[0] * step, d[1] * step);
+  });
+
+  pickBtn.addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(){
+    var file = fileInput.files && fileInput.files[0];
+    fileInput.value = "";
+    if(!file) return;
+    errorText.textContent = "";
+    if(file.size > MAX_BYTES){
+      errorText.textContent = "사진이 너무 커요 (4MB 이하로 골라주세요)";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(){ resetPending = false; loadIntoEditor(reader.result, null, true); };
+    reader.onerror = function(){ errorText.textContent = "사진을 읽지 못했어요, 다시 시도해주세요"; };
+    reader.readAsDataURL(file);
+  });
+
+  resetBtn.addEventListener("click", function(){
+    resetPending = true;
+    showEmpty();
+    errorText.textContent = "";
+  });
+
+  // ---- 배경음 ----
   var audioNameEl = document.getElementById("audioName");
   var audioPickBtn = document.getElementById("audioPickBtn");
   var audioResetBtn = document.getElementById("audioResetBtn");
@@ -179,48 +393,31 @@
   window.hwacanceSettings.get().then(function(settings){
     showAudio(settings && settings.audioName);
     if(settings && settings.photoDataUrl){
-      loadedPhotoDataUrl = settings.photoDataUrl;
-      showPhoto(settings.photoDataUrl);
-      hintText.textContent = "클릭해서 다른 사진으로 바꾸기";
+      saved.photoDataUrl = settings.photoDataUrl;
+      saved.photoSource = settings.photoSource || null;
+      saved.photoCrop = settings.photoCrop || null;
+      // 원본이 남아 있으면 원본으로 다시 편집하고, 예전 방식으로 저장된 사진은 저장본 그대로 불러온다.
+      loadIntoEditor(saved.photoSource || saved.photoDataUrl, saved.photoSource ? saved.photoCrop : null, false);
     }
     if(settings && settings.nickname){
       nicknameInput.value = settings.nickname;
     }
   });
 
-  previewWrap.addEventListener("click", function(){ fileInput.click(); });
-
-  fileInput.addEventListener("change", function(){
-    var file = fileInput.files && fileInput.files[0];
-    if(!file) return;
-    errorText.textContent = "";
-    if(file.size > MAX_BYTES){
-      errorText.textContent = "사진이 너무 커요 (4MB 이하로 골라주세요)";
-      return;
-    }
-    var reader = new FileReader();
-    reader.onload = function(){
-      pendingDataUrl = reader.result;
-      showPhoto(pendingDataUrl);
-      hintText.textContent = "클릭해서 다른 사진으로 바꾸기";
-    };
-    reader.onerror = function(){
-      errorText.textContent = "사진을 읽지 못했어요, 다시 시도해주세요";
-    };
-    reader.readAsDataURL(file);
-  });
-
-  resetBtn.addEventListener("click", function(){
-    pendingDataUrl = "";
-    showPlaceholder();
-    hintText.textContent = "클릭해서 사진 선택";
-    errorText.textContent = "";
-  });
-
   saveBtn.addEventListener("click", function(){
-    var photoToSave = pendingDataUrl === null ? loadedPhotoDataUrl : (pendingDataUrl || null);
-    var nicknameToSave = nicknameInput.value.trim();
-    window.hwacanceSettings.set({ photoDataUrl: photoToSave, nickname: nicknameToSave || null }).then(function(){
+    var payload = { nickname: nicknameInput.value.trim() || null, photoDataUrl:null, photoSource:null, photoCrop:null };
+    if(resetPending || !ed.img){
+      // 기본 이미지로 되돌렸거나 사진이 없는 상태
+    } else if(ed.dirty){
+      payload.photoDataUrl = exportCrop();
+      payload.photoSource = ed.source;
+      payload.photoCrop = cropParams();
+    } else {
+      payload.photoDataUrl = saved.photoDataUrl;
+      payload.photoSource = saved.photoSource;
+      payload.photoCrop = saved.photoCrop;
+    }
+    window.hwacanceSettings.set(payload).then(function(){
       window.hwacanceSettings.closeSettingsWindow();
     });
   });
