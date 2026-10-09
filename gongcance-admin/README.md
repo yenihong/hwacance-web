@@ -45,7 +45,6 @@ dashboard/                  팀원에게 공유할 정적 웹 대시보드
 | 사용 이력이 있는 기기 수 | 어떤 이벤트든 1건 이상 보낸 고유 `device_id` 수 |
 | 쉼 기록 | `break_ended`("공부 재개" 클릭) 횟수, 평균 쉼은 `metadata.breakMinutes` 평균 |
 | 할 일 추가 / 완료율 | `todo_added` 횟수, `todo_completed ÷ todo_added` |
-| 공부 종료 | `study_ended`("공부 종료" 확정) 횟수, 시작은 `study_started`("공부 시작" 클릭), 평균 공부는 `metadata.studyMinutes` 평균 |
 | 사진 변경 / ASMR / 배경음 변경 | 각 이벤트 발생 총 횟수와 기기당 평균 |
 | 사용 중인 앱 버전 | 기기별 가장 최근 이벤트의 `app_version` 분포 |
 

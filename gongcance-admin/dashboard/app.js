@@ -150,11 +150,6 @@ function renderKpis(s, assets) {
   setText('kpiAsmrSub', `기기당 평균 ${avg(s.asmr_on_total, s.devices_active)}회`);
   setText('kpiAudio', fmt(s.audio_changes_total));
   setText('kpiAudioSub', `기기당 평균 ${avg(s.audio_changes_total, s.devices_active)}회`);
-  setText('kpiStudy', fmt(s.study_ended_total));
-  setText(
-    'kpiStudySub',
-    `시작 ${fmt(s.study_started_total)}회 · 평균 공부 ${s.avg_study_minutes === null || s.avg_study_minutes === undefined ? '–' : s.avg_study_minutes}분`
-  );
 }
 
 function renderLegend() {
@@ -210,8 +205,6 @@ function renderDailyTable(grouped) {
         <td>${d.day}</td>
         <td>${fmt(d.app_launched)}</td>
         <td>${fmt(d.setup_completed)}</td>
-        <td>${fmt(d.study_started)}</td>
-        <td>${fmt(d.study_ended)}</td>
         <td>${fmt(d.break_started)}</td>
         <td>${fmt(d.break_ended)}</td>
         <td>${fmt(d.todo_added)}</td>
