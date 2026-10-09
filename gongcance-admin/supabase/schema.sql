@@ -15,7 +15,9 @@ create table if not exists public.gongcance_events (
       'todo_added',       -- 할 일 추가
       'todo_completed',   -- 할 일 체크
       'asmr_on',          -- ASMR(배경음) 켜기
-      'audio_changed'     -- 배경음 파일 변경
+      'audio_changed',    -- 배경음 파일 변경
+      'study_started',    -- 시작 화면에서 "공부 시작" 클릭
+      'study_ended'       -- "공부 종료" 확정, metadata.studyMinutes(그날 총 공부 시간)
     )
   ),
   app_version text,
@@ -50,7 +52,10 @@ select
   count(*) filter (where event_type = 'asmr_on') as asmr_on_total,
   count(*) filter (where event_type = 'audio_changed') as audio_changes_total,
   min(created_at) as first_event_at,
-  max(created_at) as last_event_at
+  max(created_at) as last_event_at,
+  count(*) filter (where event_type = 'study_started') as study_started_total,
+  count(*) filter (where event_type = 'study_ended') as study_ended_total,
+  round(avg((metadata->>'studyMinutes')::numeric) filter (where event_type = 'study_ended'), 1) as avg_study_minutes
 from public.gongcance_events;
 
 -- 일자별 이벤트 추이 (한국 시간 기준 날짜)

@@ -600,6 +600,7 @@ body{
   document.getElementById("startBtn").addEventListener("click", function(){
     started = true;
     state.studyTickAt = Date.now();
+    track("study_started");
     document.body.classList.remove("starting");
     renderAll(); startTicking();
   });
@@ -636,6 +637,7 @@ body{
       study: formatDuration(state.studyMs / 60000),
       breaks: state.records.length
     };
+    track("study_ended", { studyMinutes: Math.round(state.studyMs / 6000) / 10 });
     // 공부 종료는 하루의 끝: 다음에 켜면 기록 없이 처음부터 시작한다(요약은 지금 화면에만 남는다).
     state.records = [];
     state.lastRecordedAt = null;

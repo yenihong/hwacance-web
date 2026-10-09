@@ -5,7 +5,7 @@ const { pathToFileURL } = require("url");
 const { trackEvent, trackOnce } = require("./telemetry");
 
 // 위젯 화면(렌더러)에서 보내도 되는 통계 이벤트 목록
-const RENDERER_EVENTS = ["break_started", "break_ended", "todo_added", "todo_completed", "asmr_on"];
+const RENDERER_EVENTS = ["break_started", "break_ended", "todo_added", "todo_completed", "asmr_on", "study_started", "study_ended"];
 
 const TRAY_ICON_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAACBElEQVR42u3dsU3DYBSFUU/GDJQMwBT0DEWPREHPEHQ0RFRGIIoAdhzLNj9+90S6Usro/07xunTXt69dg/U2uj9tIXI4DtHDMQgfDkH4cAjCh0MQPxyB8OEQxA9HIH44AvHDEQAAgPjJCMQPRwAAAOInIwAAAPGTEQAAgPjJCAAAAAAAPETsAAAAAAA8BAAGgAFQf/3N5cklAugBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgwS6u7r+t+WcCwPNL33Q/3wsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACqAbh7PKy6pQAent5WHQCtAZxAMBQEAAAAKAdgAMFYEACqHYFfn8/f8o+OPwAaAvj4DkAggOMBAAAASUfguQAcgQAAAAAAAADgCHQEAgAAAAAAAIAj0BEIAAAAAAAAAI5ARyAAAAAAAAAAtDsCtwKw1bEHAAAAAAAAAAA4AgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKASAJs3AAAAAAAAAPDHkQaAAWAA2MoAIADAQwBgABgABoABYHEAIMhcBwAAAAAAQWR8AAD4BQCCoPgAADAIAIKQ+AAAMAoAgoD4UwAgKB4fAAAmAUBQOP65ACAoGn8OAAgKxp8LAIRC4ZcAgKBI/CUAQNh5+LUAgLDT8GsDAGFn4bcCAMMOoh/vHcnTOIFJaQDyAAAAAElFTkSuQmCC";
 
@@ -289,6 +289,7 @@ ipcMain.on("telemetry:track", (_event, eventType, metadata) => {
   if(!RENDERER_EVENTS.includes(eventType)) return;
   const safe = {};
   if(metadata && typeof metadata.breakMinutes === "number") safe.breakMinutes = metadata.breakMinutes;
+  if(metadata && typeof metadata.studyMinutes === "number") safe.studyMinutes = metadata.studyMinutes;
   trackEvent(eventType, safe);
 });
 

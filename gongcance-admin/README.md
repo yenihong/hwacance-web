@@ -20,6 +20,7 @@ dashboard/                  팀원에게 공유할 정적 웹 대시보드
 2. **스키마 실행** — SQL Editor에서 [supabase/schema.sql](supabase/schema.sql) 내용을 그대로 실행합니다.
    - `gongcance_events` 테이블: 위젯이 이벤트를 쓰기만 할 수 있음 (읽기 불가)
    - `gongcance_v_summary`, `gongcance_v_daily_events`, `gongcance_v_daily_devices`, `gongcance_v_versions` 뷰: 대시보드가 읽는 집계 데이터만 노출
+   - 이미 실행한 적이 있다면 [supabase/migration_study_events.sql](supabase/migration_study_events.sql)만 실행하면 `공부 시작/종료` 이벤트가 추가됩니다.
    - 화캉스의 `events` 테이블과 이름이 겹치지 않아 기존 데이터에 영향이 없습니다.
 3. **위젯에 연동** — [widget-integration/README.md](widget-integration/README.md) 안내대로 `telemetry.js`를 추가하고 이벤트 호출을 붙인 뒤, 버전을 올려 새로 빌드·릴리스합니다.
 4. **대시보드 설정** — `dashboard/config.js`에 화캉스 admin과 같은 Supabase URL/anon key가 이미 들어 있습니다. 다른 프로젝트를 쓴다면 `config.example.js`를 참고해 바꿔주세요.
@@ -44,6 +45,7 @@ dashboard/                  팀원에게 공유할 정적 웹 대시보드
 | 사용 이력이 있는 기기 수 | 어떤 이벤트든 1건 이상 보낸 고유 `device_id` 수 |
 | 쉼 기록 | `break_ended`("공부 재개" 클릭) 횟수, 평균 쉼은 `metadata.breakMinutes` 평균 |
 | 할 일 추가 / 완료율 | `todo_added` 횟수, `todo_completed ÷ todo_added` |
+| 공부 종료 | `study_ended`("공부 종료" 확정) 횟수, 시작은 `study_started`("공부 시작" 클릭), 평균 공부는 `metadata.studyMinutes` 평균 |
 | 사진 변경 / ASMR / 배경음 변경 | 각 이벤트 발생 총 횟수와 기기당 평균 |
 | 사용 중인 앱 버전 | 기기별 가장 최근 이벤트의 `app_version` 분포 |
 

@@ -1,6 +1,6 @@
 {
   "name": "gongcance-widget",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "공캉스 데스크톱 위젯 - 스터디 브레이크 스톱워치",
   "main": "main.js",
   "scripts": {

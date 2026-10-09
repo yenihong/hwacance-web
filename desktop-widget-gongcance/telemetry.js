@@ -34,7 +34,7 @@ function saveState() {
 }
 
 // event_type: 'app_launched' | 'setup_completed' | 'photo_changed' | 'break_started' | 'break_ended'
-//           | 'todo_added' | 'todo_completed' | 'asmr_on' | 'audio_changed'
+//           | 'todo_added' | 'todo_completed' | 'asmr_on' | 'audio_changed' | 'study_started' | 'study_ended'
 async function trackEvent(eventType, metadata = {}) {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/gongcance_events`, {
