@@ -107,6 +107,8 @@ function createSettingsWindow(){
     }
   });
   settingsWindow.setMenuBarVisibility(false);
+  // 맥에서는 Dock 아이콘 없는 메뉴 막대 앱이라, 설정 창을 앞으로 가져오려면 앱 포커스가 필요하다.
+  if(process.platform === "darwin") app.focus({ steal: true });
   settingsWindow.loadFile(path.join(__dirname, "settings.html"));
   settingsWindow.on("closed", () => { settingsWindow = null; });
 }
@@ -145,7 +147,14 @@ function buildTrayMenu(){
 
 function createTray(){
   try{
-    const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL);
+    let icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL);
+    if(process.platform === "darwin" && !icon.isEmpty()){
+      // 맥 메뉴 막대는 18pt 아이콘을 쓴다 (레티나용 2배 해상도도 함께 넣어 선명하게).
+      const menuBarIcon = nativeImage.createEmpty();
+      menuBarIcon.addRepresentation({ scaleFactor: 1, buffer: icon.resize({ width: 18, height: 18, quality: "best" }).toPNG() });
+      menuBarIcon.addRepresentation({ scaleFactor: 2, buffer: icon.resize({ width: 36, height: 36, quality: "best" }).toPNG() });
+      icon = menuBarIcon;
+    }
     if(icon.isEmpty()){
       dialog.showErrorBox("트레이 아이콘 오류", "아이콘 이미지 데이터가 비어있습니다 (TRAY_ICON_DATA_URL 손상 가능성).");
     }
@@ -192,6 +201,8 @@ ipcMain.on("telemetry:track", (_event, eventType, metadata) => {
 });
 
 app.whenReady().then(() => {
+  // 맥: Dock에 아이콘을 띄우지 않고 메뉴 막대 아이콘으로만 존재 (윈도우의 트레이 전용 동작과 동일).
+  if(process.platform === "darwin" && app.dock) app.dock.hide();
   createWindow();
   createTray();
   const isFirstRun = !fs.existsSync(SETTINGS_FILE);
