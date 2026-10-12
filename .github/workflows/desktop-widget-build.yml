@@ -1,8 +1,8 @@
 name: desktop-widget build (Windows + Mac)
 
-# 릴리스를 만들면 태그에 맞는 위젯을 윈도우(.exe)와 맥(.dmg)으로 빌드해서 같은 릴리스에 올린다.
-#   desktop-widget-v*  → desktop-widget            (화캉스 위젯)  hwacance-widget-<버전>.exe / hwacance-widget-<버전>-mac.dmg
-#   gongcance-v*       → desktop-widget-gongcance  (공캉스 위젯)  gongcance-widget-<버전>.exe / gongcance-widget-<버전>-mac.dmg
+# 릴리스를 만들면 태그에 맞는 위젯을 윈도우(.exe)와 맥(.zip)으로 빌드해서 같은 릴리스에 올린다.
+#   desktop-widget-v*  → desktop-widget            (화캉스 위젯)  hwacance-widget-<버전>.exe / hwacance-widget-<버전>-mac.zip
+#   gongcance-v*       → desktop-widget-gongcance  (공캉스 위젯)  gongcance-widget-<버전>.exe / gongcance-widget-<버전>-mac.zip
 # 이미 만든 릴리스에 파일을 추가하려면 Actions 탭에서 "Run workflow"를 누르고 태그 이름을 넣으면 된다.
 on:
   release:
@@ -76,10 +76,10 @@ jobs:
         with:
           name: ${{ needs.pick.outputs.dir }}-${{ runner.os }}
           path: |
-            ${{ needs.pick.outputs.dir }}/dist/*.dmg
+            ${{ needs.pick.outputs.dir }}/dist/*-mac.zip
             ${{ needs.pick.outputs.dir }}/dist/*.exe
       - run: |
           shopt -s nullglob
-          gh release upload "${{ needs.pick.outputs.tag }}" dist/*.dmg dist/*.exe --clobber
+          gh release upload "${{ needs.pick.outputs.tag }}" dist/*-mac.zip dist/*.exe --clobber
         env:
           GH_TOKEN: ${{ github.token }}

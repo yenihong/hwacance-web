@@ -35,7 +35,7 @@
     "mac": {
       "target": [
         {
-          "target": "dmg",
+          "target": "zip",
           "arch": [
             "universal"
           ]
@@ -47,9 +47,6 @@
       "extendInfo": {
         "LSUIElement": true
       }
-    },
-    "dmg": {
-      "title": "${productName}"
     }
   },
   "allowScripts": {
