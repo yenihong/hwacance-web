@@ -3,10 +3,15 @@ name: desktop-widget build (Windows + Mac)
 # 릴리스를 만들면 태그에 맞는 위젯을 윈도우(.exe)와 맥(.zip)으로 빌드해서 같은 릴리스에 올린다.
 #   desktop-widget-v*  → desktop-widget            (화캉스 위젯)  hwacance-widget-<버전>.exe / hwacance-widget-<버전>-mac.zip
 #   gongcance-v*       → desktop-widget-gongcance  (공캉스 위젯)  gongcance-widget-<버전>.exe / gongcance-widget-<버전>-mac.zip
-# 이미 만든 릴리스에 파일을 추가하려면 Actions 탭에서 "Run workflow"를 누르고 태그 이름을 넣으면 된다.
+# 이미 만든 릴리스에 파일을 추가하려면 Actions 탭에서 "Run workflow"를 누르고 태그 이름을 넣거나,
+# "build-<릴리스 태그>" 이름의 태그를 푸시하면 된다 (예: build-desktop-widget-v1.3.1). 이 경우 맥 파일만 만든다.
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - "build-desktop-widget-v*"
+      - "build-gongcance-v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -30,12 +35,17 @@ jobs:
       - id: p
         run: |
           TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          PLAT="${{ inputs.platforms || 'both' }}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#build-}"
+            PLAT=mac
+          fi
           case "$TAG" in
             desktop-widget-v*) DIR=desktop-widget ;;
             gongcance-v*)      DIR=desktop-widget-gongcance ;;
             *)                 DIR="" ;;
           esac
-          case "${{ inputs.platforms || 'both' }}" in
+          case "$PLAT" in
             mac)     M='["macos-latest"]' ;;
             windows) M='["windows-latest"]' ;;
             *)       M='["macos-latest","windows-latest"]' ;;
@@ -61,13 +71,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'release' && needs.pick.outputs.tag || github.ref }}
+          ref: ${{ github.event_name == 'release' && needs.pick.outputs.tag || github.event_name == 'push' && 'main' || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
       - if: runner.os == 'macOS'
-        run: npx electron-builder --mac --publish never
+        # 애플 개발자 인증서가 없으므로 앱 폴더만 만든 뒤 ad-hoc 서명하고 직접 zip으로 묶는다.
+        # (서명이 없으면 M1 이후 맥에서 실행되지 않는다.)
+        run: |
+          npx electron-builder --mac --universal --dir --publish never
+          APP=$(ls -d dist/mac-universal/*.app)
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep "$APP"
+          PREFIX=$(node -p "require('./package.json').build.mac.artifactName.split('-\${version}')[0]")
+          VERSION=$(node -p "require('./package.json').version")
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "dist/${PREFIX}-${VERSION}-mac.zip"
+          ls -la dist
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - if: runner.os == 'Windows'
