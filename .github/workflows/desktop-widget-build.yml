@@ -4,14 +4,14 @@ name: desktop-widget build (Windows + Mac)
 #   desktop-widget-v*  → desktop-widget            (화캉스 위젯)  hwacance-widget-<버전>.exe / hwacance-widget-<버전>-mac.zip
 #   gongcance-v*       → desktop-widget-gongcance  (공캉스 위젯)  gongcance-widget-<버전>.exe / gongcance-widget-<버전>-mac.zip
 # 이미 만든 릴리스에 파일을 추가하려면 Actions 탭에서 "Run workflow"를 누르고 태그 이름을 넣거나,
-# "build-<릴리스 태그>" 이름의 태그를 푸시하면 된다 (예: build-desktop-widget-v1.3.1). 이 경우 맥 파일만 만든다.
+# "build/<릴리스 태그>" 이름의 브랜치를 푸시하면 된다 (예: build/desktop-widget-v1.3.1). 이 경우 맥 파일만 만든다.
 on:
   release:
     types: [published]
   push:
-    tags:
-      - "build-desktop-widget-v*"
-      - "build-gongcance-v*"
+    branches:
+      - "build/desktop-widget-v*"
+      - "build/gongcance-v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -37,7 +37,7 @@ jobs:
           TAG="${{ github.event.release.tag_name || inputs.tag }}"
           PLAT="${{ inputs.platforms || 'both' }}"
           if [ "${{ github.event_name }}" = "push" ]; then
-            TAG="${GITHUB_REF_NAME#build-}"
+            TAG="${GITHUB_REF_NAME#build/}"
             PLAT=mac
           fi
           case "$TAG" in
@@ -71,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'release' && needs.pick.outputs.tag || github.event_name == 'push' && 'main' || github.ref }}
+          ref: ${{ github.event_name == 'release' && needs.pick.outputs.tag || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
