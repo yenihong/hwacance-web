@@ -29,30 +29,27 @@
     ],
     "win": {
       "target": "portable",
-      "icon": "icon.png"
+      "icon": "icon.png",
+      "artifactName": "hwacance-widget-${version}.${ext}"
     },
     "mac": {
       "target": [
         {
           "target": "dmg",
           "arch": [
-            "arm64",
-            "x64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "arm64",
-            "x64"
+            "universal"
           ]
         }
       ],
+      "artifactName": "hwacance-widget-${version}-mac.${ext}",
       "icon": "icon.png",
       "category": "public.app-category.productivity",
       "extendInfo": {
         "LSUIElement": true
       }
+    },
+    "dmg": {
+      "title": "${productName}"
     }
   },
   "allowScripts": {

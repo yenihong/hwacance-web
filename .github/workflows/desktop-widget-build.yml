@@ -1,0 +1,85 @@
+name: desktop-widget build (Windows + Mac)
+
+# 릴리스를 만들면 태그에 맞는 위젯을 윈도우(.exe)와 맥(.dmg)으로 빌드해서 같은 릴리스에 올린다.
+#   desktop-widget-v*  → desktop-widget            (화캉스 위젯)  hwacance-widget-<버전>.exe / hwacance-widget-<버전>-mac.dmg
+#   gongcance-v*       → desktop-widget-gongcance  (공캉스 위젯)  gongcance-widget-<버전>.exe / gongcance-widget-<버전>-mac.dmg
+# 이미 만든 릴리스에 파일을 추가하려면 Actions 탭에서 "Run workflow"를 누르고 태그 이름을 넣으면 된다.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "파일을 올릴 릴리스 태그 (예: desktop-widget-v1.3.1, gongcance-v1.0.15)"
+        required: true
+      platforms:
+        description: "빌드할 OS"
+        required: true
+        default: mac
+        type: choice
+        options: [mac, windows, both]
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    outputs:
+      dir: ${{ steps.p.outputs.dir }}
+      tag: ${{ steps.p.outputs.tag }}
+      matrix: ${{ steps.p.outputs.matrix }}
+    steps:
+      - id: p
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          case "$TAG" in
+            desktop-widget-v*) DIR=desktop-widget ;;
+            gongcance-v*)      DIR=desktop-widget-gongcance ;;
+            *)                 DIR="" ;;
+          esac
+          case "${{ inputs.platforms || 'both' }}" in
+            mac)     M='["macos-latest"]' ;;
+            windows) M='["windows-latest"]' ;;
+            *)       M='["macos-latest","windows-latest"]' ;;
+          esac
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "matrix=$M" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: pick
+    if: needs.pick.outputs.dir != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(needs.pick.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ needs.pick.outputs.dir }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && needs.pick.outputs.tag || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - if: runner.os == 'macOS'
+        run: npx electron-builder --mac --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - if: runner.os == 'Windows'
+        run: npx electron-builder --win portable --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.pick.outputs.dir }}-${{ runner.os }}
+          path: |
+            ${{ needs.pick.outputs.dir }}/dist/*.dmg
+            ${{ needs.pick.outputs.dir }}/dist/*.exe
+      - run: |
+          shopt -s nullglob
+          gh release upload "${{ needs.pick.outputs.tag }}" dist/*.dmg dist/*.exe --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

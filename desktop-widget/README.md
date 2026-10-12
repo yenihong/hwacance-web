@@ -2,7 +2,24 @@
 
 바탕화면 구석에 항상 떠 있는 화장쉼 스톱워치 위젯입니다. 둥근 흰색 카드 + 우측 하단에 삐져나온 변기 일러스트 형태의 알림 카드 스타일이고, Electron으로 감싸서 테두리 없이 항상 위에 떠 있는 작은 창으로 띄웁니다.
 
-## 실행 전 준비물
+## 다운로드
+
+| 운영체제 | 링크 |
+|---|---|
+| 윈도우 | [hwacance-widget-1.3.1.exe](https://github.com/yenihong/hwacance-web/releases/download/desktop-widget-v1.3.1/hwacance-widget-1.3.1.exe) |
+| 맥 (M1 이후·인텔 공용) | [hwacance-widget-1.3.1-mac.dmg](https://github.com/yenihong/hwacance-web/releases/download/desktop-widget-v1.3.1/hwacance-widget-1.3.1-mac.dmg) |
+
+### 맥에서 설치하기
+1. `.dmg`를 열고 **화캉스 위젯**을 응용 프로그램 폴더로 끌어다 놓습니다.
+2. 처음 열 때 "확인되지 않은 개발자" 경고가 뜨면 **시스템 설정 → 개인정보 보호 및 보안**에서 **"그래도 열기"**를 누릅니다. (애플 개발자 인증서로 서명하지 않은 앱이라 처음 한 번만 필요해요.)
+3. 실행하면 화면 오른쪽 아래에 위젯이, 화면 위 메뉴 막대에 아이콘이 생깁니다. 맥에서는 Dock에 나타나지 않고 메뉴 막대 아이콘으로만 존재해요(윈도우의 트레이 아이콘과 같은 역할).
+
+### 새 버전 배포하기
+`package.json`의 `version`을 올리고 GitHub에서 `desktop-widget-v<버전>` 태그로 릴리스를 만들면, GitHub Actions가 윈도우 `.exe`와 맥 `.dmg`를 빌드해서 그 릴리스에 자동으로 올립니다. 이미 있는 릴리스에 파일만 추가하려면 Actions 탭 → **desktop-widget build** → **Run workflow**에서 태그 이름을 넣으면 돼요.
+
+## 직접 빌드하기
+
+### 실행 전 준비물
 
 - [Node.js](https://nodejs.org) (LTS 버전 설치 — 설치하면 `npm`도 같이 설치됩니다)
 
@@ -17,7 +34,7 @@ npm start
 
 화면 오른쪽 아래에 위젯이 뜨고, 작업표시줄 우측 트레이 아이콘에도 화캉스 아이콘이 생깁니다. 트레이 아이콘을 클릭하면 보이기/숨기기, 우클릭하면 위치 재설정·종료 메뉴가 나옵니다.
 
-## 진짜 설치파일(.exe) 만들기
+## 설치파일 만들기 (윈도우 .exe)
 
 ```bash
 npm run build
@@ -47,4 +64,4 @@ npm run build
 ## 참고
 
 - 이 프로젝트는 소스코드만 작성된 상태입니다. 실제 `.exe`를 만들려면 Node.js가 설치된 PC에서 위 `npm run build` 과정을 직접 실행해야 해요(이 작업환경에는 Node.js가 없어서 미리 빌드해드리지 못했습니다).
-- Mac에서 만들고 싶다면 `package.json`의 `build.win` 대신 `build.mac`을 추가하고 `electron-builder --mac`으로 빌드하면 됩니다.
+- 맥용은 맥에서 `npm run build:mac`을 실행하면 `dist/`에 `hwacance-widget-x.x.x-mac.dmg`가 생깁니다.
